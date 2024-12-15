@@ -1,4 +1,4 @@
-package com.pedestrianassistant.Repository;
+package com.pedestrianassistant.Repository.Media.Video;
 
 import com.pedestrianassistant.Model.Media.Video.Video;
 import org.springframework.data.jpa.repository.JpaRepository;

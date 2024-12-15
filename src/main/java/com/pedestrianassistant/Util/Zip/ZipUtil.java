@@ -1,4 +1,4 @@
-package com.pedestrianassistant.Util;
+package com.pedestrianassistant.Util.Zip;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,4 +1,4 @@
-package com.pedestrianassistant.Repository;
+package com.pedestrianassistant.Repository.Media.Photo;
 
 import com.pedestrianassistant.Model.Media.Photo.Photo;
 import org.springframework.data.jpa.repository.JpaRepository;
