@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LocationRequestDto {
+    private Long id;
     private String address;
     private Double latitude;
     private Double longitude;

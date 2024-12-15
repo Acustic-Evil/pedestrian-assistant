@@ -1,5 +1,6 @@
 package com.pedestrianassistant.Service.Core;
 
+import com.pedestrianassistant.Dto.Request.Core.IncidentTypeRequestDto;
 import com.pedestrianassistant.Model.Core.IncidentType;
 
 import java.util.List;
@@ -28,10 +29,10 @@ public interface IncidentTypeService {
     /**
      * Save or update an incident type.
      *
-     * @param incidentType The IncidentType object to be saved or updated.
+     * @param incidentTypeRequestDto The IncidentType object to be saved or updated.
      * @return The saved or updated IncidentType object.
      */
-    IncidentType save(IncidentType incidentType);
+    IncidentType save(IncidentTypeRequestDto incidentTypeRequestDto);
 
     /**
      * Delete an incident type by its ID.

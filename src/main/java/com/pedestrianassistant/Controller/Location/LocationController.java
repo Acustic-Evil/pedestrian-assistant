@@ -1,10 +1,12 @@
 package com.pedestrianassistant.Controller.Location;
 
+import com.pedestrianassistant.Dto.Request.Location.LocationRequestDto;
 import com.pedestrianassistant.Dto.Response.Location.LocationResponseDto;
 import com.pedestrianassistant.Exception.InvalidLocationException;
 import com.pedestrianassistant.Mapper.Location.LocationMapper;
 import com.pedestrianassistant.Model.Location.Location;
 import com.pedestrianassistant.Service.Location.LocationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,7 @@ public class LocationController {
 
     private final LocationService locationService;
 
+    @Autowired
     public LocationController(LocationService locationService) {
         this.locationService = locationService;
     }
@@ -62,7 +65,7 @@ public class LocationController {
     public ResponseEntity<?> getAddressFromCoordinates(@RequestParam double latitude, @RequestParam double longitude) {
         try {
             Location location = locationService.getAddressFromCoordinates(latitude, longitude);
-            return ResponseEntity.ok(location);
+            return ResponseEntity.ok(LocationMapper.toDto(location));
         } catch (InvalidLocationException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
@@ -71,12 +74,12 @@ public class LocationController {
     /**
      * Create or update a location.
      *
-     * @param location The location to be saved or updated.
+     * @param locationRequestDto The location to be created.
      * @return The created or updated location.
      */
     @PostMapping
-    public ResponseEntity<LocationResponseDto> createOrUpdateLocation(@RequestBody Location location) {
-        Location savedLocation = locationService.save(location);
+    public ResponseEntity<LocationResponseDto> createLocation(@RequestBody LocationRequestDto locationRequestDto) {
+        Location savedLocation = locationService.save(locationRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(LocationMapper.toDto(savedLocation));
     }
 

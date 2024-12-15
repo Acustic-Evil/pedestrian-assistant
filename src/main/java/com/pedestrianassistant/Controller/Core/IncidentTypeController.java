@@ -1,9 +1,11 @@
 package com.pedestrianassistant.Controller.Core;
 
+import com.pedestrianassistant.Dto.Request.Core.IncidentTypeRequestDto;
 import com.pedestrianassistant.Dto.Response.Core.IncidentTypeResponseDto;
 import com.pedestrianassistant.Mapper.Core.IncidentTypeMapper;
 import com.pedestrianassistant.Model.Core.IncidentType;
 import com.pedestrianassistant.Service.Core.IncidentTypeService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ public class IncidentTypeController {
 
     private final IncidentTypeService incidentTypeService;
 
+    @Autowired
     public IncidentTypeController(IncidentTypeService incidentTypeService) {
         this.incidentTypeService = incidentTypeService;
     }
@@ -52,12 +55,12 @@ public class IncidentTypeController {
     /**
      * Create or update an incident type.
      *
-     * @param incidentType The incident type to be saved or updated.
+     * @param incidentTypeRequestDto The incident type to be created.
      * @return The created or updated incident type.
      */
     @PostMapping
-    public ResponseEntity<IncidentTypeResponseDto> createOrUpdateIncidentType(@RequestBody IncidentType incidentType) {
-        IncidentType savedType = incidentTypeService.save(incidentType);
+    public ResponseEntity<IncidentTypeResponseDto> createIncidentType(@RequestBody IncidentTypeRequestDto incidentTypeRequestDto) {
+        IncidentType savedType = incidentTypeService.save(incidentTypeRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(IncidentTypeMapper.toDto(savedType));
     }
 

@@ -1,5 +1,6 @@
 package com.pedestrianassistant.Service.Location;
 
+import com.pedestrianassistant.Dto.Request.Location.LocationRequestDto;
 import com.pedestrianassistant.Model.Location.Location;
 
 import java.util.List;
@@ -54,10 +55,10 @@ public interface LocationService {
     /**
      * Save or update a location.
      *
-     * @param location The Location object to be saved or updated.
+     * @param locationRequestDto The Location object to be saved or updated.
      * @return The saved or updated Location object.
      */
-    Location save(Location location);
+    Location save(LocationRequestDto locationRequestDto);
 
     /**
      * Delete a location by its ID.

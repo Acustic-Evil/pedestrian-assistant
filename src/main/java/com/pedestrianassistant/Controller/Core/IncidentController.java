@@ -5,6 +5,7 @@ import com.pedestrianassistant.Dto.Response.Core.IncidentResponseDto;
 import com.pedestrianassistant.Mapper.Core.IncidentMapper;
 import com.pedestrianassistant.Model.Core.Incident;
 import com.pedestrianassistant.Service.Core.IncidentService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,7 @@ public class IncidentController {
 
     private final IncidentService incidentService;
 
+    @Autowired
     public IncidentController(IncidentService incidentService) {
         this.incidentService = incidentService;
     }
@@ -74,7 +76,7 @@ public class IncidentController {
      * @return The created incident.
      */
     @PostMapping
-    public ResponseEntity<Object> createIncident(
+    public ResponseEntity<?> createIncident(
             @RequestPart("incidentRequestDto") IncidentRequestDto incidentRequestDto,
             @RequestPart("incidentFiles") MultipartFile incidentFiles) {
 
@@ -96,7 +98,6 @@ public class IncidentController {
         }
     }
 
-
     /**
      * Delete an incident by ID.
      *
@@ -108,4 +109,97 @@ public class IncidentController {
         incidentService.deleteById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    /**
+     * Retrieve incidents by title.
+     *
+     * @param title The title or part of the title to search for.
+     * @return A list of incidents matching the title.
+     */
+    @GetMapping("/search/title")
+    public ResponseEntity<List<IncidentResponseDto>> getIncidentsByTitle(@RequestParam String title) {
+        List<IncidentResponseDto> incidents = incidentService.findByTitle(title)
+                .stream()
+                .map(IncidentMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(incidents);
+    }
+
+    /**
+     * Retrieve incidents by description.
+     *
+     * @param description The description or part of the description to search for.
+     * @return A list of incidents matching the description.
+     */
+    @GetMapping("/search/description")
+    public ResponseEntity<List<IncidentResponseDto>> getIncidentsByDescription(@RequestParam String description) {
+        List<IncidentResponseDto> incidents = incidentService.findByDescription(description)
+                .stream()
+                .map(IncidentMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(incidents);
+    }
+
+    /**
+     * Retrieve incidents by username.
+     *
+     * @param username The username of the user associated with the incidents.
+     * @return A list of incidents created by the specified user.
+     */
+    @GetMapping("/search/username")
+    public ResponseEntity<List<IncidentResponseDto>> getIncidentsByUsername(@RequestParam String username) {
+        List<IncidentResponseDto> incidents = incidentService.findByUsername(username)
+                .stream()
+                .map(IncidentMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(incidents);
+    }
+
+    /**
+     * Retrieve incidents by a specific date.
+     *
+     * @param date The date in DD-MM-YYYY format.
+     * @return A list of incidents created on the specified date.
+     */
+    @GetMapping("/search/date")
+    public ResponseEntity<List<IncidentResponseDto>> getIncidentsByDate(@RequestParam String date) {
+        List<IncidentResponseDto> incidents = incidentService.findByCreatedAt(date)
+                .stream()
+                .map(IncidentMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(incidents);
+    }
+
+    /**
+     * Retrieve incidents within a specific date range.
+     *
+     * @param startDate The start date in DD-MM-YYYY format.
+     * @param endDate   The end date in DD-MM-YYYY format.
+     * @return A list of incidents created within the specified date range.
+     */
+    @GetMapping("/search/date-range")
+    public ResponseEntity<List<IncidentResponseDto>> getIncidentsByDateRange(
+            @RequestParam String startDate, @RequestParam String endDate) {
+        List<IncidentResponseDto> incidents = incidentService.findByCreatedAtBetween(startDate, endDate)
+                .stream()
+                .map(IncidentMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(incidents);
+    }
+
+    /**
+     * Retrieve incidents by location address.
+     *
+     * @param addressPart The part of the address to search for.
+     * @return A list of incidents matching the address part.
+     */
+    @GetMapping("/search/address")
+    public ResponseEntity<List<IncidentResponseDto>> getIncidentsByAddress(@RequestParam String addressPart) {
+        List<IncidentResponseDto> incidents = incidentService.findByLocationAddressContaining(addressPart)
+                .stream()
+                .map(IncidentMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(incidents);
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.pedestrianassistant.Service.Location;
 
+import com.pedestrianassistant.Dto.Request.Location.LocationRequestDto;
 import com.pedestrianassistant.Exception.InvalidLocationException;
 import com.pedestrianassistant.Model.Location.Location;
 import com.pedestrianassistant.Repository.Location.LocationRepository;
@@ -96,7 +97,13 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public Location save(Location location) {
+    public Location save(LocationRequestDto locationRequestDto) {
+        Location location = new Location();
+
+        location.setAddress(locationRequestDto.getAddress());
+        location.setLatitude(locationRequestDto.getLatitude());
+        location.setLongitude(locationRequestDto.getLongitude());
+
         return locationRepository.save(location);
     }
 

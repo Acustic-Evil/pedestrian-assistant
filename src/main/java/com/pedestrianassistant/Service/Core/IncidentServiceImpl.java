@@ -66,6 +66,36 @@ public class IncidentServiceImpl implements IncidentService {
     }
 
     @Override
+    public List<Incident> findByTitle(String title) {
+        return incidentRepository.findByTitleContainingIgnoreCase(title);
+    }
+
+    @Override
+    public List<Incident> findByDescription(String description) {
+        return incidentRepository.findByDescriptionContainingIgnoreCase(description);
+    }
+
+    @Override
+    public List<Incident> findByUsername(String username) {
+        return incidentRepository.findByUser_Username(username);
+    }
+
+    @Override
+    public List<Incident> findByCreatedAt(String date) {
+        return incidentRepository.findByCreatedAt(date);
+    }
+
+    @Override
+    public List<Incident> findByCreatedAtBetween(String startDate, String endDate) {
+        return incidentRepository.findByCreatedAtBetween(startDate, endDate);
+    }
+
+    @Override
+    public List<Incident> findByLocationAddressContaining(String addressPart) {
+        return incidentRepository.findByLocationAddressContaining(addressPart);
+    }
+
+    @Override
     public Incident save(IncidentRequestDto incidentRequestDto, InputStream incidentPhotosAndVideos) {
 
         Incident incident = new Incident();
@@ -84,13 +114,9 @@ public class IncidentServiceImpl implements IncidentService {
 
         LocationRequestDto locationRequestDto = incidentRequestDto.getLocationRequestDto();
 
-        Location location = locationService.findByLatitudeAndLongitude(locationRequestDto.getLatitude(), locationRequestDto.getLongitude())
+        Location location = locationService.findById(locationRequestDto.getId())
                 .orElseGet(() -> {
-                    Location newLocation = new Location();
-                    newLocation.setAddress(locationRequestDto.getAddress());
-                    newLocation.setLatitude(locationRequestDto.getLatitude());
-                    newLocation.setLongitude(locationRequestDto.getLongitude());
-                    return locationService.save(newLocation);
+                    return locationService.save(locationRequestDto);
                 });
 
         IncidentType incidentType = incidentTypeService.findById(incidentRequestDto.getIncidentTypeId())

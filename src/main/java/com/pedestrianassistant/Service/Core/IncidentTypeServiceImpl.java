@@ -1,5 +1,6 @@
 package com.pedestrianassistant.Service.Core;
 
+import com.pedestrianassistant.Dto.Request.Core.IncidentTypeRequestDto;
 import com.pedestrianassistant.Model.Core.IncidentType;
 import com.pedestrianassistant.Repository.Core.IncidentTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,12 @@ public class IncidentTypeServiceImpl implements IncidentTypeService {
     }
 
     @Override
-    public IncidentType save(IncidentType incidentType) {
+    public IncidentType save(IncidentTypeRequestDto incidentTypeRequestDto) {
+        IncidentType incidentType = new IncidentType();
+
+        incidentType.setName(incidentTypeRequestDto.getName());
+        incidentType.setDescription(incidentTypeRequestDto.getDescription());
+
         return incidentTypeRepository.save(incidentType);
     }
 
