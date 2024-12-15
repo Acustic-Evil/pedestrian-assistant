@@ -34,6 +34,24 @@ public interface LocationService {
     Optional<Location> findByAddress(String address);
 
     /**
+     * Find a location by its latitude and longitude.
+     *
+     * @param latitude  The latitude of the location.
+     * @param longitude The longitude of the location.
+     * @return An Optional containing the Location if found, or empty if not found.
+     */
+    Optional<Location> findByLatitudeAndLongitude(double latitude, double longitude);
+
+    /**
+     * Retrieve the address from latitude and longitude using Nominatim API.
+     *
+     * @param latitude  The latitude of the location.
+     * @param longitude The longitude of the location.
+     * @return The location.
+     */
+    Location getAddressFromCoordinates(double latitude, double longitude);
+
+    /**
      * Save or update a location.
      *
      * @param location The Location object to be saved or updated.

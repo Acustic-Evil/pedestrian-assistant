@@ -1,6 +1,7 @@
 package com.pedestrianassistant.Controller.Location;
 
 import com.pedestrianassistant.Dto.Response.Location.LocationResponseDto;
+import com.pedestrianassistant.Exception.InvalidLocationException;
 import com.pedestrianassistant.Mapper.Location.LocationMapper;
 import com.pedestrianassistant.Model.Location.Location;
 import com.pedestrianassistant.Service.Location.LocationService;
@@ -50,16 +51,21 @@ public class LocationController {
     }
 
     /**
-     * Get a location by address.
+     * Retrieves the address based on the provided geographic coordinates.
      *
-     * @param address The address of the location.
-     * @return The location with the specified address, if found.
+     * @param latitude  the latitude of the location
+     * @param longitude the longitude of the location
+     * @return a ResponseEntity containing the Location object if successful,
+     * or an error message with a 400 Bad Request status if an InvalidLocationException occurs
      */
-    @GetMapping("/address")
-    public ResponseEntity<LocationResponseDto> getLocationByAddress(@RequestParam String address) {
-        Optional<Location> location = locationService.findByAddress(address);
-        return location.map(value -> ResponseEntity.ok(LocationMapper.toDto(value)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    @GetMapping("/coordinates")
+    public ResponseEntity<?> getAddressFromCoordinates(@RequestParam double latitude, @RequestParam double longitude) {
+        try {
+            Location location = locationService.getAddressFromCoordinates(latitude, longitude);
+            return ResponseEntity.ok(location);
+        } catch (InvalidLocationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     /**

@@ -84,7 +84,7 @@ public class IncidentServiceImpl implements IncidentService {
 
         LocationRequestDto locationRequestDto = incidentRequestDto.getLocationRequestDto();
 
-        Location location = locationService.findByAddress(locationRequestDto.getAddress())
+        Location location = locationService.findByLatitudeAndLongitude(locationRequestDto.getLatitude(), locationRequestDto.getLongitude())
                 .orElseGet(() -> {
                     Location newLocation = new Location();
                     newLocation.setAddress(locationRequestDto.getAddress());

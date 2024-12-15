@@ -19,10 +19,10 @@ public class Location {
     @Column(name = "address")
     private String address;
 
-    @Column(name = "latitude", nullable = false)
+    @Column(name = "latitude", nullable = false, unique = true)
     private Double latitude;
 
-    @Column(name = "longitude", nullable = false)
+    @Column(name = "longitude", nullable = false, unique = true)
     private Double longitude;
 
 }

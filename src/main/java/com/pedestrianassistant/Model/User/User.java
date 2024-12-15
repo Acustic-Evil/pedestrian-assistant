@@ -22,7 +22,7 @@ public class User {
     @Column(name = "surname", columnDefinition = "TEXT")
     private String surname;
 
-    @Column(name = "username", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "username", columnDefinition = "TEXT", nullable = false, unique = true)
     private String username;
 
     @Column(name = "password", columnDefinition = "TEXT")

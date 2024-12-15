@@ -9,6 +9,31 @@
       "name": "media.storage.package.report.name",
       "type": "java.lang.String",
       "description": "Base package name for storing single media files archive for particular date."
+    },
+    {
+      "name": "nominatim.api.url",
+      "type": "java.lang.String",
+      "description": "Base URL for the Nominatim API with the required format parameter."
+    },
+    {
+      "name": "moscow.latitude.min",
+      "type": "java.lang.Double",
+      "description": "Minimum latitude for Moscow geographical bounds."
+    },
+    {
+      "name": "moscow.latitude.max",
+      "type": "java.lang.Double",
+      "description": "Maximum latitude for Moscow geographical bounds."
+    },
+    {
+      "name": "moscow.longitude.min",
+      "type": "java.lang.Double",
+      "description": "Minimum longitude for Moscow geographical bounds."
+    },
+    {
+      "name": "moscow.longitude.max",
+      "type": "java.lang.Double",
+      "description": "Maximum longitude for Moscow geographical bounds."
     }
   ]
 }
