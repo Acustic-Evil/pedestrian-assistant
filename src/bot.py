@@ -1,31 +1,42 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters
+from handlers.commands import start, start_incident, set_title, set_description, cancel, add_file, finish_incident, TITLE, DESCRIPTION
+from utils.logger import logger
 from dotenv import load_dotenv
 import os
-import logging
 
+# Загрузка токена из .env файла
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+if not TOKEN:
+    logger.error("Telegram Token not found in .env.")
+    exit("Add TELEGRAM_TOKEN into .env")
 
-logger = logging.getLogger(__name__)
+def main():
+    logger.info("Bot initialization...")
 
-async def echo(update: Update, context):
-    await update.message.reply_text(f"Вы написали: {update.message.text}")
-
-async def start(update: Update, context):
-    logger.info(f"Пользователь {update.effective_user.username} вызвал команду /start")
-    await update.message.reply_text("Привет! Логирование включено.")
-
-if __name__ == '__main__':
+    # Создание приложения
     application = ApplicationBuilder().token(TOKEN).build()
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    # Conversation handler for incident creation
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("start_incident", start_incident)],
+        states={
+            TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_title)],
+            DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_description)],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+    )
 
-    logger.info("Бот запущен...")
+    # Регистрация обработчиков
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(conv_handler)
+    application.add_handler(CommandHandler("finish", finish_incident))
+    application.add_handler(MessageHandler(filters.PHOTO | filters.VIDEO, add_file))
+
+    # Запуск бота
+    logger.info("Bot started...")
     application.run_polling()
+
+if __name__ == "__main__":
+    main()

@@ -1,3 +1,6 @@
 *venv
 *.env
 *.DS_Store
+*bot.log
+*src/handlers/__pycache__
+*src/utils/__pycache__
