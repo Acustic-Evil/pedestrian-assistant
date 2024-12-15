@@ -1,5 +1,5 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters
-from handlers.commands import start, start_incident, set_title, set_description, cancel, add_file, finish_incident, TITLE, DESCRIPTION
+from handlers.commands import request_location, save_location, start, start_incident, set_title, set_description, cancel, add_file, finish_incident, TITLE, DESCRIPTION
 from utils.logger import logger
 from dotenv import load_dotenv
 import os
@@ -33,6 +33,8 @@ def main():
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("finish", finish_incident))
     application.add_handler(MessageHandler(filters.PHOTO | filters.VIDEO, add_file))
+    application.add_handler(CommandHandler("send_location", request_location))
+    application.add_handler(MessageHandler(filters.LOCATION, save_location))
 
     # Запуск бота
     logger.info("Bot started...")

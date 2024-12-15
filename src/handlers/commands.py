@@ -1,4 +1,4 @@
-from telegram import Update, ReplyKeyboardRemove, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters
 from utils.logger import logger
 from handlers.file_handlers import process_file, finalize_incident
@@ -146,6 +146,40 @@ async def finish_incident(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Инцидент завершён! Вы можете начать новый инцидент или выполнить другие действия.",
         reply_markup=reply_markup
     )
+    
+async def request_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Requests the user's location with a button.
+    """
+    logger.info(f"User {update.effective_user.username} used /send_location.")
+    
+    # Кнопка для отправки геолокации
+    keyboard = [[KeyboardButton("Отправить местоположение", request_location=True)]]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+
+    await update.message.reply_text(
+        "Пожалуйста, отправьте ваше местоположение, используя кнопку ниже.",
+        reply_markup=reply_markup
+    )
+
+async def save_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Saves the user's location (latitude and longitude).
+    """
+    if update.message.location:
+        incident_data['location'] = {
+            'latitude': update.message.location.latitude,
+            'longitude': update.message.location.longitude
+        }
+        logger.info(f"Location saved: {incident_data['location']}")
+        await update.message.reply_text(
+            f"Местоположение сохранено: широта {incident_data['location']['latitude']}, "
+            f"долгота {incident_data['location']['longitude']}."
+        )
+    else:
+        logger.warning("No location data received.")
+        await update.message.reply_text("Ошибка: местоположение не отправлено.")
+
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
