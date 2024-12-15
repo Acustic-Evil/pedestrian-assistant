@@ -16,16 +16,16 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "name", columnDefinition = "TEXT")
     private String name;
 
-    @Column(name = "surname", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "surname", columnDefinition = "TEXT")
     private String surname;
 
     @Column(name = "username", columnDefinition = "TEXT", nullable = false)
     private String username;
 
-    @Column(name = "password", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "password", columnDefinition = "TEXT")
     private String password;
 
     @ManyToOne
