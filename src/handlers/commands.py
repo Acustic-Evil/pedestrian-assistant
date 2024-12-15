@@ -4,7 +4,7 @@ from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, Upd
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters
 from utils.logger import logger
 from handlers.file_handlers import process_file, finalize_incident
-from utils.api_utils import send_location_to_backend, send_zip_to_backend
+from utils.api_utils import send_location_to_backend, send_incident_to_backend
 
 # States for the conversation
 TITLE, DESCRIPTION = range(2)
@@ -30,7 +30,7 @@ def generate_keyboard():
         keyboard.remove(["/start_incident"])
 
     # Добавляем кнопку /finish, если все поля заполнены
-    if incident_data['title'] and incident_data['description'] and incident_data.get('location') and incident_data.get('files'):
+    if incident_data['title'] and incident_data['description'] and incident_data.get('files'):
         keyboard.append(["/finish"])
 
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
@@ -42,12 +42,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     logger.info(f"User {update.effective_user.username} used /start")
 
-    # # Keyboard with commands
-    # keyboard = [
-    #     ["/start_incident"]
-    # ]
-    # reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
-
     commands_list = """
 Добро пожаловать! Вот доступные команды:
 
@@ -56,7 +50,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 """
     reply_markup = generate_keyboard()
-    # await update.message.reply_text(commands_list, reply_markup=reply_markup)
     await update.message.reply_text(commands_list, reply_markup=reply_markup)
 
 async def start_incident(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -85,13 +78,6 @@ async def set_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     incident_data['title'] = update.message.text
     logger.info(f"Incident title set: {incident_data['title']}")
-    
-    # Return the keyboard with commands
-    # keyboard = [["/cancel"]]
-    # await update.message.reply_text(
-    #     "Теперь введите описание инцидента (например, \"Машина припаркована на тротуаре\").",
-    #     reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
-    # )
     
     reply_markup = generate_keyboard()
     
@@ -148,6 +134,7 @@ async def save_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Проверка ответа от бэкенда
         if "error" in backend_response:
+            await update.message.reply_text("Ошибка при добавлении местоположения.")
             logger.error(f"Ошибка при проверке местоположения: {backend_response['error']}")
             return
 
@@ -186,8 +173,6 @@ async def edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "edit_location":
         await query.edit_message_text("Пожалуйста, отправьте новое местоположение.")
         context.user_data["editing_field"] = "location"
-    elif query.data == "show_files":
-        show_files
 
 async def save_edited_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -273,55 +258,83 @@ def generate_file_keyboard():
 
     return InlineKeyboardMarkup(keyboard)
 
-async def show_files(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def show_files_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Displays the list of uploaded files with options to delete.
-    """
-    if not incident_data["files"]:
-        await update.message.reply_text("Файлы не добавлены.")
-        return
-
-    # Генерация сообщения с файлами
-    file_list = "\n".join([f"{idx + 1}. {file.file_id}" for idx, file in enumerate(incident_data["files"])])
-    keyboard = generate_file_keyboard()
-
-    await update.message.reply_text(
-        f"Загруженные файлы:\n{file_list}\n\nВыберите действие:",
-        reply_markup=keyboard
-    )
-    
-async def delete_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Handles the deletion of individual or all files based on the user's selection.
+    Sends each uploaded file back to the user with an option to delete.
     """
     query = update.callback_query
     await query.answer()
 
-    # Обработка удаления конкретного файла
+    if not incident_data["files"]:
+        await query.edit_message_text("Файлы не добавлены.")
+        return
+
+    # Отправляем каждое фото/видео пользователю с кнопками
+    for idx, file in enumerate(incident_data["files"]):
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(f"Удалить этот файл", callback_data=f"delete_file_{idx}")]
+        ])
+
+        try:
+            # Если это фото
+            if file.file_id and file.file_path.endswith(('.jpg', '.png')):
+                await context.bot.send_photo(
+                    chat_id=query.message.chat_id,
+                    photo=file.file_id,
+                    reply_markup=keyboard
+                )
+            # Если это видео
+            elif file.file_id and file.file_path.endswith('.mp4'):
+                await context.bot.send_video(
+                    chat_id=query.message.chat_id,
+                    video=file.file_id,
+                    reply_markup=keyboard
+                )
+            else:
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text=f"Неизвестный формат файла: {file.file_id}"
+                )
+        except Exception as e:
+            logger.error(f"Ошибка отправки файла: {e}")
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=f"Не удалось отправить файл {idx + 1}."
+            )
+
+    # Кнопка для удаления всех файлов
+    delete_all_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Удалить все файлы", callback_data="delete_all_files")]
+    ])
+    await context.bot.send_message(
+        chat_id=query.message.chat_id,
+        text="Выберите действие для всех файлов:",
+        reply_markup=delete_all_keyboard
+    )
+
+
+async def delete_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the deletion of a single file or all files.
+    """
+    query = update.callback_query
+    await query.answer()
+
     if query.data.startswith("delete_file_"):
         file_idx = int(query.data.split("_")[-1])
 
         if 0 <= file_idx < len(incident_data["files"]):
             deleted_file = incident_data["files"].pop(file_idx)
             logger.info(f"File deleted: {deleted_file.file_id}")
-            await query.edit_message_text(f"Файл {file_idx + 1} удалён.")
+            await query.message.reply_text(f"Файл {file_idx} удалён.")
         else:
-            await query.edit_message_text("Ошибка: файл не найден.")
+            await query.message.reply_text("Ошибка: файл не найден.")
 
-    # Обработка удаления всех файлов
     elif query.data == "delete_all_files":
         incident_data["files"].clear()
         logger.info("All files deleted.")
-        await query.edit_message_text("Все файлы удалены.")
+        await query.message.reply_text("Все файлы удалены.")
 
-    # Обновляем список файлов
-    if incident_data["files"]:
-        file_list = "\n".join([f"{idx + 1}. {file.file_id}" for idx, file in enumerate(incident_data["files"])])
-        keyboard = generate_file_keyboard()
-        await query.message.reply_text(
-            f"Оставшиеся файлы:\n{file_list}\n\nВыберите действие:",
-            reply_markup=keyboard
-        )
 
 async def finish_incident(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -368,9 +381,6 @@ async def request_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     logger.info(f"User {update.effective_user.username} used /send_location.")
     
-    # # Кнопка для отправки геолокации
-    # keyboard = [[KeyboardButton("Отправить местоположение", request_location=True)]]
-    # reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
     reply_markup = generate_keyboard()
     await update.message.reply_text(
         "Пожалуйста, отправьте ваше местоположение, используя кнопку ниже.",
@@ -385,7 +395,7 @@ async def confirm_send(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     # Проверяем, заполнены ли все поля
-    if not incident_data["title"] or not incident_data["description"] or not incident_data.get("location"):
+    if not incident_data["title"] or not incident_data["description"] or not incident_data.get("files"):
         await query.edit_message_text("Ошибка: не все данные заполнены.")
         return
 
@@ -394,7 +404,7 @@ async def confirm_send(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Логика отправки данных
     try:
         zip_buffer = await finalize_incident(incident_data)
-        await send_zip_to_backend(zip_buffer, incident_data)
+        await send_incident_to_backend(zip_buffer, incident_data, update)
         await query.edit_message_text("Инцидент успешно отправлен!")
         logger.info("Incident successfully sent to the backend.")
     except Exception as e:

@@ -1,5 +1,5 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters, CallbackQueryHandler
-from handlers.commands import confirm_send, delete_file, edit_data_request, edit_field, save_edited_field, save_location, start, start_incident, set_title, set_description, cancel, add_file, finish_incident, TITLE, DESCRIPTION
+from handlers.commands import confirm_send, delete_file, edit_data_request, edit_field, save_edited_field, save_location, show_files_callback, start, start_incident, set_title, set_description, cancel, add_file, finish_incident, TITLE, DESCRIPTION
 from utils.logger import logger
 from dotenv import load_dotenv
 import os
@@ -36,6 +36,7 @@ def main():
     application.add_handler(CommandHandler("cancel", cancel))
     application.add_handler(CommandHandler("edit", edit_data_request))
     application.add_handler(CallbackQueryHandler(edit_field, pattern="edit_.*"))
+    application.add_handler(CallbackQueryHandler(show_files_callback, pattern="show_files"))
     application.add_handler(CallbackQueryHandler(confirm_send, pattern="confirm_send"))
     application.add_handler(CallbackQueryHandler(delete_file, pattern="delete_file_.*"))
     application.add_handler(CallbackQueryHandler(delete_file, pattern="delete_all_files"))
