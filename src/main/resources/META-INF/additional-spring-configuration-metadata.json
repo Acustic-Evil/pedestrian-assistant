@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "media.storage.path",
+      "type": "java.lang.String",
+      "description": "Base directory for storing media files."
+    },
+    {
+      "name": "media.storage.package.report.name",
+      "type": "java.lang.String",
+      "description": "Base package name for storing single media files archive for particular date."
+    }
+  ]
+}

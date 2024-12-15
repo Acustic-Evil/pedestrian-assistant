@@ -1,4 +1,4 @@
-package com.pedestrianassistant.Model.Media.IncidentVideo;
+package com.pedestrianassistant.Model.Media.Video;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

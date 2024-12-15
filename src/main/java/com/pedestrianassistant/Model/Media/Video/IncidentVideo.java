@@ -1,7 +1,6 @@
-package com.pedestrianassistant.Model.Media.IncidentVideo;
+package com.pedestrianassistant.Model.Media.Video;
 
 import com.pedestrianassistant.Model.Core.Incident;
-import com.pedestrianassistant.Model.Media.Video;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,17 +12,16 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@IdClass(IncidentVideoId.class)
 @Table(name = "incident_videos")
 public class IncidentVideo {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @ManyToOne
     @JoinColumn(name = "id_incident", nullable = false)
     private Incident incident;
 
+    @Id
     @ManyToOne
     @JoinColumn(name = "id_video", nullable = false)
     private Video video;

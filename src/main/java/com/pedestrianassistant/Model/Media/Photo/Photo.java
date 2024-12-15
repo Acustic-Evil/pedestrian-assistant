@@ -1,4 +1,4 @@
-package com.pedestrianassistant.Model.Media;
+package com.pedestrianassistant.Model.Media.Photo;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,8 +1,8 @@
 package com.pedestrianassistant.Model.Core;
 
 import com.pedestrianassistant.Model.Location.Location;
-import com.pedestrianassistant.Model.Media.IncidentPhoto.IncidentPhoto;
-import com.pedestrianassistant.Model.Media.IncidentVideo.IncidentVideo;
+import com.pedestrianassistant.Model.Media.Photo.IncidentPhoto;
+import com.pedestrianassistant.Model.Media.Video.IncidentVideo;
 import com.pedestrianassistant.Model.User.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

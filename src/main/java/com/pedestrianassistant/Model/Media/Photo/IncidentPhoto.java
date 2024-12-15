@@ -1,7 +1,6 @@
-package com.pedestrianassistant.Model.Media.IncidentPhoto;
+package com.pedestrianassistant.Model.Media.Photo;
 
 import com.pedestrianassistant.Model.Core.Incident;
-import com.pedestrianassistant.Model.Media.Photo;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
