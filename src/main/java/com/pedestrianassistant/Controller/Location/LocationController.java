@@ -62,7 +62,7 @@ public class LocationController {
      * or an error message with a 400 Bad Request status if an InvalidLocationException occurs
      */
     @GetMapping("/coordinates")
-    public ResponseEntity<?> getAddressFromCoordinates(@RequestParam double latitude, @RequestParam double longitude) {
+    public ResponseEntity<?> getLocationFromCoordinates(@RequestParam double latitude, @RequestParam double longitude) {
         try {
             Location location = locationService.getAddressFromCoordinates(latitude, longitude);
             return ResponseEntity.ok(LocationMapper.toDto(location));
