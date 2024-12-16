@@ -1,39 +1,44 @@
-import logging
-import requests
 from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, Update, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters
 from utils.logger import logger
 from handlers.file_handlers import process_file, finalize_incident
-from utils.api_utils import send_location_to_backend, send_incident_to_backend
+from utils.api_utils import fetch_incident_types, send_location_to_backend, send_incident_to_backend
 
 # States for the conversation
-TITLE, DESCRIPTION = range(2)
+TITLE, DESCRIPTION, SELECT_TYPE = range(3)
 
 # Structure for current incident
 incident_data = {
     'files': [],
     'title': None,
     'description': None,
+    'incidentType': None,
     'address': None,
 }
 
-def generate_keyboard():
+def generate_keyboard(minimal=False):
     """
     Generates a dynamic keyboard based on the current state of incident_data.
+    If minimal=True, generates a keyboard with only /start_incident.
     """
+    if minimal:
+        return ReplyKeyboardMarkup([["/start_incident"]], resize_keyboard=True, one_time_keyboard=False)
+
     keyboard = [["/start_incident"]]
     
     if incident_data['title'] or incident_data['description'] or incident_data.get('location') or incident_data.get('files'):
         keyboard.append([KeyboardButton("Отправить местоположение", request_location=True)])
         keyboard.append(["/edit"])
         keyboard.append(["/cancel"])
-        keyboard.remove(["/start_incident"])
+        if ["/start_incident"] in keyboard:  # Проверка перед удалением
+            keyboard.remove(["/start_incident"])
 
     # Добавляем кнопку /finish, если все поля заполнены
-    if incident_data['title'] and incident_data['description'] and incident_data.get('files'):
+    if incident_data['title'] and incident_data['description'] and incident_data.get('files') and incident_data.get('address'):
         keyboard.append(["/finish"])
 
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -61,6 +66,7 @@ async def start_incident(update: Update, context: ContextTypes.DEFAULT_TYPE):
     incident_data['files'] = []
     incident_data['title'] = None
     incident_data['description'] = None
+    incident_data['incidentType'] = None
     incident_data['address'] = None
 
     keyboard = [["/cancel"]]
@@ -90,23 +96,89 @@ async def set_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def set_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Captures the description of the incident and ends the conversation.
+    Captures the description of the incident and proceeds to type selection.
     """
     incident_data['description'] = update.message.text
     logger.info(f"Incident description set: {incident_data['description']}")
 
-    # Проверяем, нужно ли показывать кнопку /finish
-    reply_markup = generate_keyboard()
+    # Переход к выбору типа инцидента
+    await choose_incident_type(update, context)
+    return SELECT_TYPE
 
-    await update.message.reply_text(
-        f"Инцидент сохранён:\n"
-        f"Название: {incident_data['title']}\n"
-        f"Описание: {incident_data['description']}\n"
-        "Теперь вы можете отправить фото или видео и местополложение.",
-        reply_markup=reply_markup
-    )
-    
-    return ConversationHandler.END
+async def choose_incident_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Allows the user to select a new type of the incident for editing.
+    """
+    # Получаем список типов инцидентов с бэкенда
+    incident_types = fetch_incident_types()  # Эта функция должна возвращать список словарей с "name" и "id"
+
+    if not incident_types:
+        # Ответ в зависимости от типа обновления
+        if update.callback_query:
+            await update.callback_query.answer()
+            await update.callback_query.message.reply_text("Ошибка: не удалось загрузить типы инцидентов.")
+        else:
+            await update.message.reply_text("Ошибка: не удалось загрузить типы инцидентов.")
+        return ConversationHandler.END
+
+    # Сохраняем типы инцидентов в контексте
+    context.user_data["incident_types"] = {t["name"]: t["id"] for t in incident_types}
+
+    # Генерация клавиатуры с типами инцидентов
+    keyboard = [[t["name"]] for t in incident_types] + [["/cancel"]]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+
+    # Отправляем сообщение с клавиатурой
+    if update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.message.reply_text(
+            "Выберите новый тип инцидента из предложенного списка:",
+            reply_markup=reply_markup
+        )
+    else:
+        await update.message.reply_text(
+            "Выберите новый тип инцидента из предложенного списка:",
+            reply_markup=reply_markup
+        )
+
+    return SELECT_TYPE
+
+
+
+async def set_incident_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Captures the selected incident type and ends the conversation.
+    """
+    selected_type = update.message.text
+    incident_types = context.user_data.get("incident_types", {})
+
+    logger.info(f"User selected type: {selected_type}")
+    logger.info(f"Available types: {incident_types}")
+
+    # Проверяем, выбран ли тип из предложенного списка
+    if selected_type in incident_types:
+        incident_data["incidentType"] = {
+            "id": incident_types[selected_type],
+            "name": selected_type,
+        }
+
+        logger.info(f"Incident type set: {incident_data['incidentType']}")
+
+        # Генерация обновлённой клавиатуры
+        reply_markup = generate_keyboard()
+
+        # Отправляем сообщение с подтверждением и новой клавиатурой
+        await update.message.reply_text(
+            f"Тип инцидента установлен: {selected_type}.\n"
+            "Теперь вы можете отправить фото, видео или местоположение.",
+            reply_markup=reply_markup
+        )
+        return ConversationHandler.END
+    else:
+        # Если тип не найден, отправляем сообщение об ошибке
+        await update.message.reply_text("Ошибка: выберите тип инцидента из предложенного списка.")
+        return SELECT_TYPE
+
 
 
 async def add_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -116,7 +188,8 @@ async def add_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"User {update.effective_user.username} sent a file.")
     try:
         await process_file(update, incident_data)
-        await update.message.reply_text("Файл успешно добавлен.")
+        reply_markup = generate_keyboard()
+        await update.message.reply_text("Файл успешно добавлен.", reply_markup=reply_markup)
     except Exception as e:
         logger.error(f"Error while adding file: {e}")
         await update.message.reply_text("Ошибка при добавлении файла.")
@@ -140,6 +213,7 @@ async def save_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Сохранение местоположения и адреса
         incident_data['location'] = {
+            'id': backend_response['id'],
             'latitude': latitude,
             'longitude': longitude
         }
@@ -173,6 +247,11 @@ async def edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "edit_location":
         await query.edit_message_text("Пожалуйста, отправьте новое местоположение.")
         context.user_data["editing_field"] = "location"
+    elif query.data == "edit_type":
+        # Переход к выбору типа инцидента
+        await query.answer()
+        await choose_incident_type(update, context)
+        context.user_data["editing_field"] = "incident_type"
 
 async def save_edited_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -190,15 +269,31 @@ async def save_edited_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
         incident_data["description"] = update.message.text
         await update.message.reply_text(f"Описание обновлено: {incident_data['description']}")
     elif editing_field == "location":
-        # Локация сохраняется автоматически через другой обработчик
         await update.message.reply_text("Местоположение будет обновлено после отправки.")
-    
+    elif editing_field == "incident_type":
+        # Проверяем выбранный тип инцидента
+        selected_type = update.message.text
+        incident_types = context.user_data.get("incident_types", {})
+
+        if selected_type in incident_types:
+            incident_data["incidentType"] = {
+                "id": incident_types[selected_type],
+                "name": selected_type,
+            }
+            reply_markup = generate_keyboard()
+            await update.message.reply_text(f"Тип инцидента обновлён: {selected_type}", reply_markup=reply_markup)
+        else:
+            await update.message.reply_text("Ошибка: выберите тип инцидента из предложенного списка.")
+            return
+
     # Удаляем флаг редактирования
     context.user_data["editing_field"] = None
 
     # Показываем обновлённое сообщение с данными
     summary = generate_summary_message()
     await update.message.reply_text(summary)
+
+
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -209,6 +304,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     incident_data['title'] = None
     incident_data['description'] = None
     incident_data['address'] = None
+    incident_data["incidentType"] = None
     logger.info("Incident data cleared.")
     
     keyboard = [
@@ -229,6 +325,14 @@ def generate_summary_message():
     title = incident_data.get("title", "Название не указано")
     description = incident_data.get("description", "Описание не указано")
     address = incident_data.get("address", "Местоположение не указано")
+
+    # Проверяем, что incidentType — это словарь
+    incident_type_data = incident_data.get("incidentType")
+    if isinstance(incident_type_data, dict):
+        incident_type = incident_type_data.get("name", "Тип инцидента не указан")
+    else:
+        incident_type = "Тип инцидента не указан"
+
     files_count = len(incident_data.get("files", []))
 
     summary = (
@@ -236,9 +340,11 @@ def generate_summary_message():
         f"Название: {title}\n"
         f"Описание: {description}\n"
         f"Местоположение: {address}\n"
+        f"Тип инцидента: {incident_type}\n"
         f"Количество файлов: {files_count}\n"
     )
     return summary
+
 
 def generate_file_keyboard():
     """
@@ -369,6 +475,7 @@ async def edit_data_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Редактировать название", callback_data="edit_title")],
         [InlineKeyboardButton("Редактировать описание", callback_data="edit_description")],
         [InlineKeyboardButton("Редактировать местоположение", callback_data="edit_location")],
+        [InlineKeyboardButton("Редактировать тип инцидента", callback_data="edit_type")],
         [InlineKeyboardButton("Редактировать файлы", callback_data="show_files")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -407,6 +514,22 @@ async def confirm_send(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_incident_to_backend(zip_buffer, incident_data, update)
         await query.edit_message_text("Инцидент успешно отправлен!")
         logger.info("Incident successfully sent to the backend.")
+
+        # Очистка данных
+        incident_data['files'].clear()
+        incident_data['title'] = None
+        incident_data['description'] = None
+        incident_data['address'] = None
+        incident_data["incidentType"] = None
+        logger.info("Incident data cleared.")
+
+        # Генерация минимальной клавиатуры
+        reply_markup = generate_keyboard(minimal=True)
+
+        # Отправляем новое сообщение с клавиатурой
+        await query.message.reply_text("Что вы хотите сделать дальше?", reply_markup=reply_markup)
+
     except Exception as e:
         logger.error(f"Error while sending data: {e}")
         await query.edit_message_text("Ошибка при отправке данных.")
+
