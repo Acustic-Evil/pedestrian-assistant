@@ -1,29 +1,26 @@
 import "./Sidebar.css";
-import React, { useState } from "react";
+import React from "react";
+import { NavLink } from "react-router-dom";
 
 const navItems = [
+  { name: "Сводка", path: "/" }, // Main page (summary)
   { name: "История обращений", path: "/history" },
-  { name: "Тепловая карта", path: "/heatmap" },
 ];
 
 const Sidebar = () => {
-  const [activePage, setActivePage] = useState("/history");
-
   return (
     <div className="sidebar-container">
       <div className="sidebar">
         <div className="sidebar-main">
-          <div className="sidebar-title">Сводка</div>
           <div className="nav-links">
             {navItems.map((item, index) => (
-              <a
+              <NavLink
                 key={index}
-                href={item.path}
-                className={`nav-item ${activePage === item.path ? "active" : ""}`}
-                onClick={() => setActivePage(item.path)}
+                to={item.path}
+                className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
               >
                 {item.name}
-              </a>
+              </NavLink>
             ))}
           </div>
         </div>
