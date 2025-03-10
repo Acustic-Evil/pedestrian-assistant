@@ -1,0 +1,54 @@
+/* Sidebar.css */
+.sidebar-container {
+  display: flex;
+  height: 100%;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 12rem;
+  background-color: #b3f4ad;
+  color: black;
+  border-top-right-radius: 56px;
+  border-bottom-right-radius: 56px;
+  padding: 1rem;
+  height: 80vh; /* Reduce sidebar height */
+  margin: auto 0; /* Centers it vertically */
+}
+
+
+.sidebar-main {
+  padding: 2rem;
+  height: 100%;
+}
+
+.sidebar-title {
+  font-size: 24px;
+  font-weight: bold;
+  text-decoration: underline;
+  margin-bottom: 2rem;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.nav-item {
+  text-decoration: none;
+  color: black;
+  font-size: 16px;
+  transition: background 0.3s ease;
+}
+
+.nav-item:hover {
+  text-decoration: underline;
+}
+
+.nav-item.help {
+  position: absolute;
+  /* bottom: 2rem;
+  left: 2rem; */
+}
