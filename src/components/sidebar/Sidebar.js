@@ -1,5 +1,5 @@
 import "./Sidebar.css";
-import React from "react";
+import React, { useState } from "react";
 
 const navItems = [
   { name: "История обращений", path: "/history" },
@@ -7,6 +7,8 @@ const navItems = [
 ];
 
 const Sidebar = () => {
+  const [activePage, setActivePage] = useState("/history");
+
   return (
     <div className="sidebar-container">
       <div className="sidebar">
@@ -14,11 +16,18 @@ const Sidebar = () => {
           <div className="sidebar-title">Сводка</div>
           <div className="nav-links">
             {navItems.map((item, index) => (
-              <a key={index} href={item.link} className="nav-item">
+              <a
+                key={index}
+                href={item.path}
+                className={`nav-item ${activePage === item.path ? "active" : ""}`}
+                onClick={() => setActivePage(item.path)}
+              >
                 {item.name}
               </a>
             ))}
           </div>
+        </div>
+        <div className="help-container">
           <a className="nav-item help">Помощь</a>
         </div>
       </div>
