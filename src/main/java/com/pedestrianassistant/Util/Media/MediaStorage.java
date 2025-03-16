@@ -26,4 +26,13 @@ public interface MediaStorage {
      * @param dirName Name of the directory.
      */
     void deleteDirectory(String dirName);
+
+    /**
+     * Read a file from a given directory and return an InputStream.
+     *
+     * @param dirPath Path to the directory.
+     * @param fileName Name of the file.
+     * @return InputStream of the file.
+     */
+    InputStream readFile(Path dirPath, String fileName);
 }

@@ -8,6 +8,7 @@ import com.pedestrianassistant.Model.Media.Video.Video;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 public interface MediaService {
 
@@ -18,6 +19,14 @@ public interface MediaService {
      * @return MediaServiceResult containing lists of created photos and videos.
      */
     MediaServiceResult processAndStoreMedia(InputStream zipInputStream);
+
+    /**
+     * Get binary data (byte[]) of all photos and videos associated with a specific incident.
+     *
+     * @param incidentId ID of the incident.
+     * @return Map where keys are filenames and values are byte arrays of the media files.
+     */
+    Map<String, byte[]> getIncidentMedia(Long incidentId);
 
     /**
      * Get all photos associated with a specific incident.

@@ -92,4 +92,17 @@ public class MediaStorageImpl implements MediaStorage {
             throw new RuntimeException("Error deleting directory: " + dirName, e);
         }
     }
+
+    @Override
+    public InputStream readFile(Path dirPath, String fileName) {
+        try {
+            Path filePath = dirPath.resolve(fileName);
+            if (!Files.exists(filePath) || Files.isDirectory(filePath)) {
+                throw new RuntimeException("File not found or is a directory: " + filePath);
+            }
+            return Files.newInputStream(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading file: " + fileName, e);
+        }
+    }
 }

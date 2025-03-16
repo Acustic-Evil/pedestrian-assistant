@@ -21,7 +21,9 @@ import java.io.InputStream;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -80,6 +82,39 @@ public class MediaServiceImpl implements MediaService {
 
         // Return the result object
         return new MediaServiceResult(photos, videos);
+    }
+
+    @Override
+    public Map<String, byte[]> getIncidentMedia(Long incidentId) {
+        Map<String, byte[]> mediaFiles = new HashMap<>();
+
+        // Retrieve the list of all photos and videos associated with the incident
+        List<Photo> photos = getAllPhotosByIncidentId(incidentId);
+        List<Video> videos = getAllVideosByIncidentId(incidentId);
+
+        // Read photos from the file system and add them to the Map
+        for (Photo photo : photos) {
+            try {
+                Path dirPath = Paths.get(photo.getFilePath());
+                byte[] photoBytes = Files.readAllBytes(dirPath.resolve(photo.getFileName()));
+                mediaFiles.put(photo.getFileName(), photoBytes);
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading photo: " + photo.getFileName(), e);
+            }
+        }
+
+        // Read videos from the file system and add them to the Map
+        for (Video video : videos) {
+            try {
+                Path dirPath = Paths.get(video.getFilePath());
+                byte[] videoBytes = Files.readAllBytes(dirPath.resolve(video.getFileName()));
+                mediaFiles.put(video.getFileName(), videoBytes);
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading video: " + video.getFileName(), e);
+            }
+        }
+
+        return mediaFiles;
     }
 
     @Override
