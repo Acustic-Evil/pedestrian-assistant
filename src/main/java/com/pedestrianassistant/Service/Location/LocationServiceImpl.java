@@ -63,28 +63,36 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public Location getAddressFromCoordinates(double latitude, double longitude) {
-        Optional<Location> existingLocation = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
-
-        if (existingLocation.isPresent()) {
-            return existingLocation.get();
-        }
-
-        // Correctly construct the URL
+        // Build the URL for the Nominatim API request
         String url = UriComponentsBuilder.fromHttpUrl(nominatimApiUrl)
                 .queryParam("lat", latitude)
                 .queryParam("lon", longitude)
                 .toUriString();
+
         NominatimResponse response = restTemplate.getForObject(url, NominatimResponse.class);
 
+        // Check if the response is valid
         if (response == null || response.getDisplayName() == null) {
             throw new InvalidLocationException("Failed to retrieve the address from Nominatim API.");
         }
+
+        String address = response.getDisplayName();
+
+        // Verify if the location is within Moscow boundaries
         if (!isWithinMoscowBounds(latitude, longitude)) {
             throw new InvalidLocationException("Coordinates are outside the boundaries of Moscow.");
         }
 
+        // Check if this address already exists in the database
+        Optional<Location> existingLocation = locationRepository.findByAddress(address);
+
+        if (existingLocation.isPresent()) {
+            return existingLocation.get(); // Return the existing record if found
+        }
+
+        // If the address is not found, create a new location record
         Location newLocation = new Location();
-        newLocation.setAddress(response.getDisplayName());
+        newLocation.setAddress(address);
         newLocation.setLatitude(latitude);
         newLocation.setLongitude(longitude);
 
