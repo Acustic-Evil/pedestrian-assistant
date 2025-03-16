@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -87,7 +89,16 @@ public class IncidentServiceImpl implements IncidentService {
 
     @Override
     public List<Incident> findByCreatedAtBetween(String startDate, String endDate) {
-        return incidentRepository.findByCreatedAtBetween(startDate, endDate);
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+            LocalDate parsedStartDate = LocalDate.parse(startDate, formatter);
+            LocalDate parsedEndDate = LocalDate.parse(endDate, formatter);
+
+            return incidentRepository.findByCreatedAtBetween(parsedStartDate, parsedEndDate);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid date format, expected DD-MM-YYYY");
+        }
     }
 
     @Override
