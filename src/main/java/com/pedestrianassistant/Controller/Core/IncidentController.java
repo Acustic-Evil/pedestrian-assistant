@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -200,6 +205,56 @@ public class IncidentController {
                 .map(IncidentMapper::toDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(incidents);
+    }
+
+    /**
+     * Retrieve incidents based on multiple filters.
+     *
+     * @param title         The title of the incident (optional).
+     * @param description   The description of the incident (optional).
+     * @param userId        The ID of the user who reported the incident (optional).
+     * @param locationId    The ID of the location where the incident occurred (optional).
+     * @param incidentTypeId The ID of the type of incident (optional).
+     * @param startDateStr     The start date in DD-MM-YYYY format (optional).
+     * @param endDateStr       The end date in DD-MM-YYYY format (optional).
+     * @return A list of incidents that match the given filters.
+     */
+    @GetMapping("/search/filters")
+    public ResponseEntity<List<IncidentResponseDto>> searchIncidents(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Long locationId,
+            @RequestParam(required = false) Long incidentTypeId,
+            @RequestParam(required = false) String startDateStr,
+            @RequestParam(required = false) String endDateStr) {
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = null;
+
+        try {
+            if (startDateStr != null && !startDateStr.isEmpty()) {
+                // Set start time at beginning of day
+                startDate = LocalDate.parse(startDateStr, formatter).atStartOfDay();
+            }
+            if (endDateStr != null && !endDateStr.isEmpty()) {
+                // Set end time at the end of day
+                endDate = LocalDate.parse(endDateStr, formatter).atTime(LocalTime.MAX);
+            }
+        } catch (DateTimeParseException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<Incident> incidents = incidentService.findByFilters(
+                title, description, userId, locationId, incidentTypeId, startDate, endDate);
+
+        // Map to DTOs (assuming you have an IncidentMapper for converting entities to DTOs)
+        List<IncidentResponseDto> dtos = incidents.stream()
+                .map(IncidentMapper::toDto)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
     }
 
 }

@@ -15,7 +15,10 @@ import com.pedestrianassistant.Service.Media.MediaServiceResult;
 import com.pedestrianassistant.Service.Media.MediaService;
 import com.pedestrianassistant.Service.User.RoleService;
 import com.pedestrianassistant.Service.User.UserService;
+import com.pedestrianassistant.Util.Specification.IncidentSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -163,5 +166,19 @@ public class IncidentServiceImpl implements IncidentService {
     @Override
     public void deleteById(Long id) {
         incidentRepository.deleteById(id);
+    }
+
+    public List<Incident> findByFilters(String title, String description, Long userId,
+                                          Long locationId, Long incidentTypeId,
+                                          LocalDateTime startDate, LocalDateTime endDate) {
+
+        Specification<Incident> spec = Specification.where(IncidentSpecifications.hasTitleLike(title))
+                .and(IncidentSpecifications.hasDescriptionLike(description))
+                .and(IncidentSpecifications.hasUserId(userId))
+                .and(IncidentSpecifications.hasLocationId(locationId))
+                .and(IncidentSpecifications.hasIncidentTypeId(incidentTypeId))
+                .and(IncidentSpecifications.createdBetween(startDate, endDate));
+
+        return incidentRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 }

@@ -4,6 +4,8 @@ import com.pedestrianassistant.Dto.Request.Core.IncidentRequestDto;
 import com.pedestrianassistant.Model.Core.Incident;
 
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -102,5 +104,20 @@ public interface IncidentService {
      * @param id The ID of the incident to delete.
      */
     void deleteById(Long id);
+
+    /**
+     *  Finds all incidents by any field incident has.
+     *
+     * @param title
+     * @param description
+     * @param userId
+     * @param locationId
+     * @param incidentTypeId
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    List<Incident> findByFilters(String title, String description, Long userId, Long locationId, Long incidentTypeId,
+                                 LocalDateTime startDate, LocalDateTime endDate);
 }
 
