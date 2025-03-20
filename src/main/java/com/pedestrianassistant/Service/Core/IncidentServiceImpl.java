@@ -169,13 +169,13 @@ public class IncidentServiceImpl implements IncidentService {
     }
 
     public List<Incident> findByFilters(String title, String description, Long userId,
-                                          Long locationId, Long incidentTypeId,
-                                          LocalDateTime startDate, LocalDateTime endDate) {
+                                        Long locationId, String address, Long incidentTypeId,
+                                        LocalDateTime startDate, LocalDateTime endDate) {
 
         Specification<Incident> spec = Specification.where(IncidentSpecifications.hasTitleLike(title))
                 .and(IncidentSpecifications.hasDescriptionLike(description))
                 .and(IncidentSpecifications.hasUserId(userId))
-                .and(IncidentSpecifications.hasLocationId(locationId))
+                .and(IncidentSpecifications.hasLocation(locationId, address))
                 .and(IncidentSpecifications.hasIncidentTypeId(incidentTypeId))
                 .and(IncidentSpecifications.createdBetween(startDate, endDate));
 

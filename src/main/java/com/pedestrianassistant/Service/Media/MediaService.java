@@ -61,4 +61,6 @@ public interface MediaService {
      * @return The created IncidentVideo object.
      */
     IncidentVideo createIncidentVideo(Incident incident, Video video);
+
+    List<String> getIncidentMediaUrls(Long incidentId);
 }

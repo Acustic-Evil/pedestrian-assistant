@@ -117,7 +117,7 @@ public interface IncidentService {
      * @param endDate
      * @return
      */
-    List<Incident> findByFilters(String title, String description, Long userId, Long locationId, Long incidentTypeId,
+    List<Incident> findByFilters(String title, String description, Long userId, Long locationId, String address, Long incidentTypeId,
                                  LocalDateTime startDate, LocalDateTime endDate);
 }
 

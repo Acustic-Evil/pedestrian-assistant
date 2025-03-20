@@ -12,6 +12,7 @@ import com.pedestrianassistant.Repository.Media.Video.VideoRepository;
 import com.pedestrianassistant.Util.Media.MediaStorage;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -36,13 +37,15 @@ public class MediaServiceImpl implements MediaService {
     private final IncidentVideoRepository incidentVideoRepository;
     private final MediaStorage mediaStorage;
 
+    @Value("${media.storage.path}")
+    private String mediaStoragePath;
+
     @Autowired
-    public MediaServiceImpl(
-            PhotoRepository photoRepository,
-            IncidentPhotoRepository incidentPhotoRepository,
-            VideoRepository videoRepository,
-            IncidentVideoRepository incidentVideoRepository,
-            MediaStorage mediaStorage) {
+    public MediaServiceImpl(PhotoRepository photoRepository,
+                            IncidentPhotoRepository incidentPhotoRepository,
+                            VideoRepository videoRepository,
+                            IncidentVideoRepository incidentVideoRepository,
+                            MediaStorage mediaStorage) {
         this.photoRepository = photoRepository;
         this.incidentPhotoRepository = incidentPhotoRepository;
         this.videoRepository = videoRepository;
@@ -88,11 +91,11 @@ public class MediaServiceImpl implements MediaService {
     public Map<String, byte[]> getIncidentMedia(Long incidentId) {
         Map<String, byte[]> mediaFiles = new HashMap<>();
 
-        // Retrieve the list of all photos and videos associated with the incident
-        List<Photo> photos = getAllPhotosByIncidentId(incidentId);
-        List<Video> videos = getAllVideosByIncidentId(incidentId);
+        // Use repository methods to fetch media instead of filtering manually
+        List<Photo> photos = photoRepository.findPhotosByIncidentId(incidentId);
+        List<Video> videos = videoRepository.findVideosByIncidentId(incidentId);
 
-        // Read photos from the file system and add them to the Map
+        // Read photos from file system and add them to the map
         for (Photo photo : photos) {
             try {
                 Path dirPath = Paths.get(photo.getFilePath());
@@ -103,7 +106,7 @@ public class MediaServiceImpl implements MediaService {
             }
         }
 
-        // Read videos from the file system and add them to the Map
+        // Read videos from file system and add them to the map
         for (Video video : videos) {
             try {
                 Path dirPath = Paths.get(video.getFilePath());
@@ -119,18 +122,12 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     public List<Photo> getAllPhotosByIncidentId(Long incidentId) {
-        return incidentPhotoRepository.findAll().stream()
-                .filter(incidentPhoto -> incidentPhoto.getIncident().getId().equals(incidentId))
-                .map(IncidentPhoto::getPhoto)
-                .collect(Collectors.toList());
+        return photoRepository.findPhotosByIncidentId(incidentId);
     }
 
     @Override
     public List<Video> getAllVideosByIncidentId(Long incidentId) {
-        return incidentVideoRepository.findAll().stream()
-                .filter(incidentVideo -> incidentVideo.getIncident().getId().equals(incidentId))
-                .map(IncidentVideo::getVideo)
-                .collect(Collectors.toList());
+        return videoRepository.findVideosByIncidentId(incidentId);
     }
 
     @Override
@@ -219,4 +216,33 @@ public class MediaServiceImpl implements MediaService {
         // Use a library like FFmpeg to get video metadata
         return 120; // Placeholder value for testing
     }
+
+    @Override
+    public List<String> getIncidentMediaUrls(Long incidentId) {
+        List<String> photoUrls = photoRepository.findPhotosByIncidentId(incidentId)
+                .stream()
+                .map(photo -> generateMediaUrl(photo.getFilePath(), photo.getFileName()))
+                .toList();
+
+        List<String> videoUrls = videoRepository.findVideosByIncidentId(incidentId)
+                .stream()
+                .map(video -> generateMediaUrl(video.getFilePath(), video.getFileName()))
+                .toList();
+
+        List<String> allMediaUrls = new ArrayList<>();
+        allMediaUrls.addAll(photoUrls);
+        allMediaUrls.addAll(videoUrls);
+
+        return allMediaUrls;
+    }
+
+    private String generateMediaUrl(String filePath, String filename) {
+        // Extract date and report folder from the full path
+        String[] pathParts = filePath.split("/");
+        String dateFolder = pathParts[pathParts.length - 2];  // e.g., 2025_03_18
+        String reportFolder = pathParts[pathParts.length - 1]; // e.g., report_1_2025_03_18
+
+        return "http://localhost:8080/api/media/file/" + dateFolder + "/" + reportFolder + "/" + filename;
+    }
+
 }

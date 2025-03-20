@@ -15,6 +15,7 @@ public class IncidentMapper {
 
         IncidentResponseDto dto = new IncidentResponseDto();
 
+        dto.setId(incident.getId());
         dto.setTitle(incident.getTitle());
         dto.setDescription(incident.getDescription());
         dto.setUsername(incident.getUser() != null ? incident.getUser().getUsername() : null);

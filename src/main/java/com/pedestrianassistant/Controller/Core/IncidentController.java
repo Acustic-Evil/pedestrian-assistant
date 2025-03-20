@@ -224,7 +224,8 @@ public class IncidentController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) Long locationId,
+            @RequestParam(required = false) Long locationId, // Dropdown
+            @RequestParam(required = false) String address,  // Manual input
             @RequestParam(required = false) Long incidentTypeId,
             @RequestParam(required = false) String startDateStr,
             @RequestParam(required = false) String endDateStr) {
@@ -235,26 +236,23 @@ public class IncidentController {
 
         try {
             if (startDateStr != null && !startDateStr.isEmpty()) {
-                // Set start time at beginning of day
                 startDate = LocalDate.parse(startDateStr, formatter).atStartOfDay();
             }
             if (endDateStr != null && !endDateStr.isEmpty()) {
-                // Set end time at the end of day
                 endDate = LocalDate.parse(endDateStr, formatter).atTime(LocalTime.MAX);
             }
         } catch (DateTimeParseException e) {
             return ResponseEntity.badRequest().build();
         }
 
-        List<Incident> incidents = incidentService.findByFilters(
-                title, description, userId, locationId, incidentTypeId, startDate, endDate);
-
-        // Map to DTOs (assuming you have an IncidentMapper for converting entities to DTOs)
-        List<IncidentResponseDto> dtos = incidents.stream()
+        // Fetch filtered results
+        List<IncidentResponseDto> incidents = incidentService.findByFilters(
+                        title, description, userId, locationId, address, incidentTypeId, startDate, endDate)
+                .stream()
                 .map(IncidentMapper::toDto)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(incidents);
     }
 
 }
