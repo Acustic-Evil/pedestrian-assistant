@@ -2,29 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { format } from "date-fns"; // Helps format the selected date
 import Card from "../card/Card";
 import Graph from "../graph/Graph";
 import DashboardSection from "../dashboard-section/DashboardSection";
-import "../../App.css"; // Keep styling consistent
+import "../../App.css";
 
-const incidents = [
-  {
-    title: "User",
-    location: "Откуда: улица Пушкина",
-    description: "Они тут совсем с ума сошли!!! Их трое на самокате!",
-  },
-  {
-    title: "User",
-    location: "Откуда: улица Пушкина",
-    description: "Они тут совсем с ума сошли!!! Их трое на самокате!",
-  },
-  {
-    title: "User",
-    location: "Откуда: улица Пушкина",
-    description: "Они тут совсем с ума сошли!!! Их трое на самокате!",
-  },
-];
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -35,7 +17,13 @@ const getGreeting = () => {
 
 const MainContent = () => {
   const [greeting, setGreeting] = useState(getGreeting());
-  const [selectedDate, setSelectedDate] = useState(new Date()); // Manage selected date
+  const [dateRange, setDateRange] = useState([new Date(), new Date()]); // [startDate, endDate]
+  const [startDate, endDate] = dateRange;
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const API_URL = process.env.REACT_APP_API_URL;
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -45,74 +33,84 @@ const MainContent = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    fetchRecentIncidents();
+  }, []);
+
+  const fetchRecentIncidents = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/incidents`);
+      if (!response.ok) throw new Error("Failed to fetch data");
+      const allIncidents = await response.json();
+
+      // Sort by `createdAt` (most recent first) & take the last 5 incidents
+      const recentIncidents = allIncidents
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+
+      setIncidents(recentIncidents);
+    } catch (error) {
+      console.error("Error fetching incidents:", error);
+      setIncidents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="content">
       <h1 style={{ marginBottom: "0.5rem" }}>{greeting}</h1>
 
       <Routes>
-        {/* Default Dashboard Content */}
         <Route
           path="/"
           element={
             <>
-              {/* Move "Количество обращений за" Here */}
-              <DashboardSection
-                title={
-                  <span>
-                    Количество обращений за{" "}
-                    <span style={{ textDecoration: "underline", cursor: "pointer" }}>
+              {/* Dashboard Section with Graph */}
+              <DashboardSection title="Количество обращений">
+                <div className="dashboard-cards">
+                  {/* Graph Card */}
+                  <Card className="card">
+                    <Graph startDate={startDate} endDate={endDate} />
+                  </Card>
+
+                  {/* Calendar Card */}
+                  <Card className="calendar-card">
+                    <div className="calendar-container">
                       <DatePicker
-                        selected={selectedDate}
-                        onChange={(date) => setSelectedDate(date)}
+                        selectsRange={true}
+                        startDate={startDate}
+                        endDate={endDate}
+                        onChange={(update) => setDateRange(update)}
                         dateFormat="dd-MM-yyyy"
-                        customInput={
-                          <span style={{ textDecoration: "underline", cursor: "pointer", color: "blue" }}>
-                            {format(selectedDate, "dd-MM-yyyy")}
-                          </span>
-                        }
+                        inline
                       />
-                    </span>
-                  </span>
-                }
-              >
-                <Card>
-                  <Graph selectedDate={selectedDate} />
-                </Card>
-                <Card>{/* Placeholder for another card */}</Card>
+                    </div>
+                  </Card>
+                </div>
               </DashboardSection>
 
+              {/* Recent Incidents Section */}
               <DashboardSection title="Последние обращения">
-                <div className="incidents-container">
-                  {incidents.map((incident, index) => (
-                    <div key={index} className="incident-card">
-                      <strong>{incident.title}</strong>
-                      <p>{incident.location}</p>
-                      <p>{incident.description}</p>
-                      <a href="#">Читать далее...</a>
-                    </div>
-                  ))}
+                <div className="incidents-container main-screen-container">
+                  {loading ? (
+                    <p>Загрузка...</p>
+                  ) : incidents.length === 0 ? (
+                    <p style={{ color: "gray" }}>Нет недавних обращений</p>
+                  ) : (
+                    incidents.map((incident, index) => (
+                      <div key={index} className="incident-card">
+                        <strong>{incident.title}</strong>
+                        <p>{incident.location}</p>
+                        <p>{incident.description}</p>
+                        <a href="#">Читать далее...</a>
+                      </div>
+                    ))
+                  )}
                 </div>
               </DashboardSection>
             </>
-          }
-        />
-
-        {/* History Page */}
-        <Route
-          path="/history"
-          element={
-            <DashboardSection title="История обращений">
-              <div className="incidents-container full-history">
-                {incidents.map((incident, index) => (
-                  <div key={index} className="incident-card">
-                    <strong>{incident.title}</strong>
-                    <p>{incident.location}</p>
-                    <p>{incident.description}</p>
-                    <a href="#">Читать далее...</a>
-                  </div>
-                ))}
-              </div>
-            </DashboardSection>
           }
         />
       </Routes>

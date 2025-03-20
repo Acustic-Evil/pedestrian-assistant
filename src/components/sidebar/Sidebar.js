@@ -3,7 +3,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 
 const navItems = [
-  { name: "Сводка", path: "/" }, // Main page (summary)
+  { name: "Сводка", path: "/" },
   { name: "История обращений", path: "/history" },
 ];
 
@@ -17,7 +17,9 @@ const Sidebar = () => {
               <NavLink
                 key={index}
                 to={item.path}
-                className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+                className={({ isActive }) =>
+                  `nav-item ${isActive ? "active" : ""}`
+                }
               >
                 {item.name}
               </NavLink>

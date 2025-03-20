@@ -7,33 +7,48 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { format } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-const Graph = ({ selectedDate }) => {
+const Graph = ({ startDate, endDate }) => {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const isSingleDay = isSameDay(startDate, endDate);
 
   useEffect(() => {
-    if (!selectedDate) return;
-    fetchGraphData(selectedDate);
-  }, [selectedDate]);
+    if (!startDate || !endDate) return;
+    fetchGraphData(startDate, endDate);
+  }, [startDate, endDate]);
 
-  const fetchGraphData = async (date) => {
-    const formattedDate = format(date, "dd-MM-yyyy"); // Convert date to DD-MM-YYYY
+  const fetchGraphData = async (start, end) => {
+    setLoading(true);
+    const formattedStart = format(start, "dd-MM-yyyy");
+    const formattedEnd = format(end, "dd-MM-yyyy");
+
     try {
-      const response = await fetch(`${API_URL}/incidents/search/date?date=${formattedDate}`);
+      const response = await fetch(
+        `${API_URL}/incidents/search/date-range?startDate=${formattedStart}&endDate=${formattedEnd}`
+      );
       if (!response.ok) throw new Error("Failed to fetch data");
       const incidents = await response.json();
 
-      const formattedData = processIncidentData(incidents);
+      const formattedData = isSingleDay
+        ? processIncidentDataByHour(incidents)
+        : processIncidentDataByDay(incidents);
+
       setData(formattedData);
     } catch (error) {
       console.error("Error fetching graph data:", error);
+      setData([]); // Ensure no data is set on failure
+    } finally {
+      setLoading(false);
     }
   };
 
-  const processIncidentData = (incidents) => {
+  const processIncidentDataByHour = (incidents) => {
+    if (!incidents || incidents.length === 0) return [];
+
     const hourlyCount = {};
     incidents.forEach((incident) => {
       const date = new Date(incident.createdAt);
@@ -47,15 +62,39 @@ const Graph = ({ selectedDate }) => {
       .map((time) => ({ time, count: hourlyCount[time] }));
   };
 
+  const processIncidentDataByDay = (incidents) => {
+    if (!incidents || incidents.length === 0) return [];
+
+    const dailyCount = {};
+    incidents.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    incidents.forEach((incident) => {
+      const date = format(parseISO(incident.createdAt), "dd-MM-yyyy");
+      dailyCount[date] = (dailyCount[date] || 0) + 1;
+    });
+
+    return Object.keys(dailyCount)
+      .sort((a, b) => new Date(a) - new Date(b))
+      .map((date) => ({ time: date, count: dailyCount[date] }));
+  };
+
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={data}>
-        <XAxis dataKey="time" />
-        <YAxis />
-        <Tooltip />
-        <Line type="monotone" dataKey="count" stroke="#82ca9d" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
+    <div style={{ width: "100%", height: "200px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      {loading ? (
+        <p>Загрузка...</p>
+      ) : data.length === 0 ? (
+        <p style={{ fontSize: "16px", color: "gray" }}>Нет данных за выбранный период</p>
+      ) : (
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={data}>
+            <XAxis dataKey="time" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="count" stroke="#82ca9d" strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
   );
 };
 

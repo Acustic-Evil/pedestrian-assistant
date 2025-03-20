@@ -1,0 +1,108 @@
+
+.incident-details-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .scrollable-album {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .scrollable-album img,
+  .scrollable-album video {
+    max-height: 300px;
+    border-radius: 8px;
+  }
+  
+/* Loading & Error Messages */
+.loading-text, .error-text {
+  font-size: 18px;
+  text-align: center;
+  color: gray;
+}
+
+/* Image Gallery */
+.image-gallery {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+/* Incident Information Card */
+.incident-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 600px;
+}
+
+.incident-card h2 {
+  font-size: 22px;
+  margin-bottom: 1rem;
+}
+
+.incident-card p {
+  margin: 0.5rem 0;
+}
+
+/* Map Placeholder */
+.map-placeholder {
+  width: 100%;
+  max-width: 600px;
+  height: 200px;
+  background-color: #f0f0f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: gray;
+  font-size: 16px;
+}
+
+.scrollable-album {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 10px;
+    white-space: nowrap;
+    scroll-behavior: smooth;
+  }
+  
+  .scrollable-album::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .scrollable-album::-webkit-scrollbar-thumb {
+    background-color: #bbb;
+    border-radius: 10px;
+  }
+  
+  .media-item {
+    max-height: 250px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  
+  .media-item img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  .media-item video {
+    max-width: 100%;
+    display: block;
+  }
+  

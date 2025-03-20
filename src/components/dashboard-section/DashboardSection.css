@@ -29,4 +29,13 @@
   .incidents-section .section-content {
     flex-direction: column; /* Ensures incidents are stacked */
   }
+
+  .full-history {
+    width: 100%; /* Take full width */
+    max-width: 100%; /* Prevent restrictions */
+    max-height: 63vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
   
