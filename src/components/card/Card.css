@@ -5,8 +5,9 @@
     padding: 1.5rem;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 500px; /* Adjust width as needed */
-    min-height: 250px; /* Adjust height */
+    max-width: 500px;
+    min-height: 250px;
+    max-height: 28vh;
     display: flex;
     flex-direction: column;
     align-items: center;

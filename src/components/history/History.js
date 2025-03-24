@@ -166,6 +166,7 @@ const History = () => {
 
       {/* Filters Section (One Line) */}
       <div className="filters-container">
+        {/* Row 1: Название и Описание */}
         <input
           type="text"
           placeholder="Название..."
@@ -179,7 +180,7 @@ const History = () => {
           onChange={(e) => setSearchDescription(e.target.value)}
         />
 
-        {/* Incident Type */}
+        {/* Row 2: Селекты */}
         <select
           value={selectedType}
           onChange={(e) => setSelectedType(e.target.value)}
@@ -192,34 +193,31 @@ const History = () => {
           ))}
         </select>
 
-        {/* Location Dropdown & Address Input */}
-        <div className="location-wrapper">
-          <select
-            value={selectedLocationId}
-            onChange={(e) => {
-              setSelectedLocationId(e.target.value);
-              setTypedAddress("");
-            }}
-          >
-            <option value="">Выбрать место</option>
-            {locations.map((location) => (
-              <option key={location.id} value={location.id}>
-                {location.address}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Адрес вручную..."
-            value={typedAddress}
-            onChange={(e) => {
-              setTypedAddress(e.target.value);
-              setSelectedLocationId("");
-            }}
-          />
-        </div>
+        <select
+          value={selectedLocationId}
+          onChange={(e) => {
+            setSelectedLocationId(e.target.value);
+            setTypedAddress("");
+          }}
+        >
+          <option value="">Выбрать место</option>
+          {locations.map((location) => (
+            <option key={location.id} value={location.id}>
+              {location.address}
+            </option>
+          ))}
+        </select>
 
-        {/* Users Dropdown */}
+        <input
+          type="text"
+          placeholder="Адрес вручную..."
+          value={typedAddress}
+          onChange={(e) => {
+            setTypedAddress(e.target.value);
+            setSelectedLocationId("");
+          }}
+        />
+
         <select
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(e.target.value)}
@@ -243,6 +241,7 @@ const History = () => {
           className="date-picker"
         />
 
+        {/* Buttons */}
         <button className="search-button" onClick={fetchIncidents}>
           🔍 Поиск
         </button>
