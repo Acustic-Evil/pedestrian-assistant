@@ -11,7 +11,7 @@ const App = () => {
     <Router>
       <div className="app-container">
         <div className="logo-container">
-          <img src="./tsodd.svg" alt="Logo" className="logo" />
+          <img src="/tsodd.svg" alt="Logo" className="logo" />
         </div>
         <div className="main-content">
           <Sidebar />

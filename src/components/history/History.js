@@ -3,8 +3,8 @@ import DashboardSection from "../dashboard-section/DashboardSection";
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import "../../App.css";
-import { format, isSameDay, parseISO } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { format, isSameDay, parseISO, parse } from "date-fns";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -26,21 +26,50 @@ const History = () => {
   // Date Range
   const [dateRange, setDateRange] = useState([null, null]); // [startDate, endDate]
   const [startDateStr, endDateStr] = dateRange;
-  const isSingleDay = startDateStr && endDateStr && isSameDay(startDateStr, endDateStr);
 
   // Fetched Data (Incident Types, Locations, Users)
   const [incidentTypes, setIncidentTypes] = useState([]);
   const [locations, setLocations] = useState([]);
   const [users, setUsers] = useState([]);
 
+  const [shouldTriggerSearch, setShouldTriggerSearch] = useState(false);
+  const [resetTriggered, setResetTriggered] = useState(false);
+
+  // On mount, extract dates from URL (if present)
   useEffect(() => {
     fetchIncidentTypes();
     fetchLocations();
     fetchUsers();
-    // Automatically load all incidents (no filters) on mount
-    fetchIncidents();
-    // eslint-disable-next-line
+
+    const storedRange = JSON.parse(
+      window.localStorage.getItem("historyDateRange")
+    );
+    if (storedRange && storedRange.length === 2) {
+      const [start, end] = storedRange;
+      const parsedStart = parse(start, "dd-MM-yyyy", new Date());
+      const parsedEnd = parse(end, "dd-MM-yyyy", new Date());
+
+      setDateRange([parsedStart, parsedEnd]);
+      setShouldTriggerSearch(true); // Trigger fetchIncidents in another useEffect
+      window.localStorage.removeItem("historyDateRange");
+    } else {
+      fetchIncidents(); // normal load with no filter
+    }
   }, []);
+
+  useEffect(() => {
+    if (shouldTriggerSearch && startDateStr && endDateStr) {
+      fetchIncidents();
+      setShouldTriggerSearch(false);
+    }
+  }, [shouldTriggerSearch, startDateStr, endDateStr]);
+
+  useEffect(() => {
+    if (resetTriggered) {
+      fetchIncidents(); // ✅ Now this sees truly reset filters
+      setResetTriggered(false); // Reset the flag
+    }
+  }, [resetTriggered]);
 
   const fetchIncidentTypes = async () => {
     try {
@@ -82,7 +111,8 @@ const History = () => {
 
       // Title, Description
       if (searchTitle) url += `&title=${encodeURIComponent(searchTitle)}`;
-      if (searchDescription) url += `&description=${encodeURIComponent(searchDescription)}`;
+      if (searchDescription)
+        url += `&description=${encodeURIComponent(searchDescription)}`;
 
       // Incident Type
       if (selectedType) url += `&incidentTypeId=${selectedType}`;
@@ -127,13 +157,7 @@ const History = () => {
     setSelectedLocationId("");
     setSelectedUserId("");
     setDateRange([null, null]);
-    // Instead of clearing data, let's re-fetch all incidents with no filters:
-    // fetchIncidents();
-  };
-
-  // Navigate to new page for incident details
-  const handleReadMore = (incidentId) => {
-    navigate(`/incidents/${incidentId}`); 
+    setResetTriggered(true); // ✅ Triggers the effect below
   };
 
   return (
@@ -156,7 +180,10 @@ const History = () => {
         />
 
         {/* Incident Type */}
-        <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
+        <select
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+        >
           <option value="">Все типы</option>
           {incidentTypes.map((type) => (
             <option key={type.id} value={type.id}>
@@ -216,8 +243,12 @@ const History = () => {
           className="date-picker"
         />
 
-        <button className="search-button" onClick={fetchIncidents}>🔍 Поиск</button>
-        <button className="clear-button" onClick={clearFilters}>❌ Очистить</button>
+        <button className="search-button" onClick={fetchIncidents}>
+          🔍 Поиск
+        </button>
+        <button className="clear-button" onClick={clearFilters}>
+          ❌ Очистить
+        </button>
       </div>
 
       {/* Incidents List */}
@@ -231,14 +262,32 @@ const History = () => {
             incidents.map((incident, index) => (
               <div key={index} className="incident-card">
                 <strong>{incident.title}</strong>
-                <p><strong>Пользователь:</strong> {incident.username}</p>
-                <p><strong>Адрес:</strong> {incident.locationResponseDto?.address || "Нет адреса"}</p>
-                <p><strong>Тип:</strong> {incident.incidentTypeResponseDto?.name || "Не указан"}</p>
-                <p><strong>Описание:</strong> {incident.description}</p>
-                <p><strong>Дата:</strong> {format(parseISO(incident.createdAt), "dd-MM-yyyy HH:mm")}</p>
-                <button onClick={() => handleReadMore(incident.id)}>
+                <p>
+                  <strong>Пользователь:</strong> {incident.username}
+                </p>
+                <p>
+                  <strong>Адрес:</strong>{" "}
+                  {incident.locationResponseDto?.address || "Нет адреса"}
+                </p>
+                <p>
+                  <strong>Тип:</strong>{" "}
+                  {incident.incidentTypeResponseDto?.name || "Не указан"}
+                </p>
+                <p>
+                  <strong>Описание:</strong> {incident.description}
+                </p>
+                <p>
+                  <strong>Дата:</strong>{" "}
+                  {format(parseISO(incident.createdAt), "dd-MM-yyyy HH:mm")}
+                </p>
+                <a
+                  href={`/incidents/${incident.id}`}
+                  className="read-more"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Читать далее...
-                </button>
+                </a>
               </div>
             ))
           )}

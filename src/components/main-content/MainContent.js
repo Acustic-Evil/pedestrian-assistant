@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Card from "../card/Card";
 import Graph from "../graph/Graph";
+import { format } from "date-fns";
 import DashboardSection from "../dashboard-section/DashboardSection";
 import "../../App.css";
-
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -17,13 +17,12 @@ const getGreeting = () => {
 
 const MainContent = () => {
   const [greeting, setGreeting] = useState(getGreeting());
-  const [dateRange, setDateRange] = useState([new Date(), new Date()]); // [startDate, endDate]
+  const [dateRange, setDateRange] = useState([new Date(), new Date()]);
   const [startDate, endDate] = dateRange;
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const API_URL = process.env.REACT_APP_API_URL;
-
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -86,6 +85,27 @@ const MainContent = () => {
                         dateFormat="dd-MM-yyyy"
                         inline
                       />
+                      {startDate && endDate && (
+                        <p
+                          className="history-link-hint"
+                          onClick={() => {
+                            const formattedStart = format(
+                              startDate,
+                              "dd-MM-yyyy"
+                            );
+                            const formattedEnd = format(endDate, "dd-MM-yyyy");
+
+                            window.localStorage.setItem(
+                              "historyDateRange",
+                              JSON.stringify([formattedStart, formattedEnd])
+                            );
+
+                            window.location.href = "/history";
+                          }}
+                        >
+                          🔍 Показать инциденты за выбранный период
+                        </p>
+                      )}
                     </div>
                   </Card>
                 </div>
@@ -102,9 +122,21 @@ const MainContent = () => {
                     incidents.map((incident, index) => (
                       <div key={index} className="incident-card">
                         <strong>{incident.title}</strong>
-                        <p>{incident.location}</p>
-                        <p>{incident.description}</p>
-                        <a href="#">Читать далее...</a>
+                        <p>
+                          <strong>Адрес:</strong>{" "}
+                          {incident.locationResponseDto?.address || "Не указан"}
+                        </p>
+                        <p>
+                          <strong>Описание:</strong> {incident.description}
+                        </p>
+                        <a
+                          href={`/incidents/${incident.id}`}
+                          className="read-more"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Читать далее...
+                        </a>
                       </div>
                     ))
                   )}
