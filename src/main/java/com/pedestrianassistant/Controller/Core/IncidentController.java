@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/incidents")
+@RequestMapping("/api/user/incidents")
 public class IncidentController {
 
     private final IncidentService incidentService;

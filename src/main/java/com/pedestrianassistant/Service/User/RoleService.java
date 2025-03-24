@@ -26,6 +26,14 @@ public interface RoleService {
     Optional<Role> findById(Long id);
 
     /**
+     * Retrieve a role by its name.
+     *
+     * @param name The name of the role.
+     * @return An Optional containing the Role object if found, or empty if not found.
+     */
+    Optional<Role> findByName(String name);
+
+    /**
      * Save or update a role.
      *
      * @param role The Role object to be saved or updated.

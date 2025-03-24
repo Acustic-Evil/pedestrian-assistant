@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/locations")
+@RequestMapping("/api/user/locations")
 public class LocationController {
 
     private final LocationService locationService;

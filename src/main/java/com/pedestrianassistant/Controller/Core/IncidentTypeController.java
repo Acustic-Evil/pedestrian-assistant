@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/incident-types")
+@RequestMapping("/api/user/incident-types")
 public class IncidentTypeController {
 
     private final IncidentTypeService incidentTypeService;

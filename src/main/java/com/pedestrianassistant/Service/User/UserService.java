@@ -34,6 +34,14 @@ public interface UserService {
     Optional<User> findByUsername(String username);
 
     /**
+     * Retrieve a user by their email.
+     *
+     * @param email The email of the user.
+     * @return An Optional containing the User object if found, or empty if not found.
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
      * Save or update a user.
      *
      * @param user The User object to be saved or updated.

@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @RestController
-@RequestMapping("/api/media")
+@RequestMapping("/api/user/media")
 public class MediaDownloadController {
 
     @Value("${media.storage.path}")
