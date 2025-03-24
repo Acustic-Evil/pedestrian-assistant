@@ -7,7 +7,7 @@ const navItems = [
   { name: "История обращений", path: "/history" },
 ];
 
-const Sidebar = () => {
+const Sidebar = ({ onLogout }) => {
   return (
     <div className="sidebar-container">
       <div className="sidebar">
@@ -28,6 +28,9 @@ const Sidebar = () => {
         </div>
         <div className="help-container">
           <a className="nav-item help">Помощь</a>
+          <a className="nav-item logout" onClick={onLogout}>
+            Выйти из профиля
+          </a>
         </div>
       </div>
     </div>

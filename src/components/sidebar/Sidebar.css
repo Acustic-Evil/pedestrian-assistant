@@ -59,5 +59,16 @@
   margin-top: auto;
   padding-top: 2rem;
   display: flex;
+  flex-direction: column;
   justify-content: flex-start;
+}
+
+.logout {
+  margin-top: 0.5rem;
+  color: #d9534f;
+  cursor: pointer;
+}
+
+.logout:hover {
+  text-decoration: underline;
 }
