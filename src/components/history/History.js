@@ -4,8 +4,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import "../../App.css";
 import { format, isSameDay, parseISO, parse } from "date-fns";
+import { ru } from "date-fns/locale";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchWithAuth } from "../../utils/api";
+import FilterSidebar from "../filter-sidebar/FilterSidebar";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -13,6 +15,9 @@ const History = () => {
   const navigate = useNavigate(); // For navigating to the incident details
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // Sidebar visibility state
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
 
   // Filters
   const [searchTitle, setSearchTitle] = useState("");
@@ -35,6 +40,11 @@ const History = () => {
 
   const [shouldTriggerSearch, setShouldTriggerSearch] = useState(false);
   const [resetTriggered, setResetTriggered] = useState(false);
+  
+  // Toggle filter sidebar
+  const toggleFilterSidebar = () => {
+    setIsFilterSidebarOpen(!isFilterSidebarOpen);
+  };
 
   // On mount, extract dates from URL (if present)
   useEffect(() => {
@@ -163,93 +173,37 @@ const History = () => {
 
   return (
     <div className="history-content">
-      <h1 style={{ marginBottom: "0.5rem" }}>История обращений</h1>
-
-      {/* Filters Section (One Line) */}
-      <div className="filters-container">
-        {/* Row 1: Название и Описание */}
-        <input
-          type="text"
-          placeholder="Название..."
-          value={searchTitle}
-          onChange={(e) => setSearchTitle(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Описание..."
-          value={searchDescription}
-          onChange={(e) => setSearchDescription(e.target.value)}
-        />
-
-        {/* Row 2: Селекты */}
-        <select
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-        >
-          <option value="">Все типы</option>
-          {incidentTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={selectedLocationId}
-          onChange={(e) => {
-            setSelectedLocationId(e.target.value);
-            setTypedAddress("");
-          }}
-        >
-          <option value="">Выбрать место</option>
-          {locations.map((location) => (
-            <option key={location.id} value={location.id}>
-              {location.address}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="text"
-          placeholder="Адрес вручную..."
-          value={typedAddress}
-          onChange={(e) => {
-            setTypedAddress(e.target.value);
-            setSelectedLocationId("");
-          }}
-        />
-
-        <select
-          value={selectedUserId}
-          onChange={(e) => setSelectedUserId(e.target.value)}
-        >
-          <option value="">Все пользователи</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.username || user.name || `User #${user.id}`}
-            </option>
-          ))}
-        </select>
-
-        {/* Date Picker */}
-        <DatePicker
-          selectsRange={true}
-          startDate={startDateStr}
-          endDate={endDateStr}
-          onChange={(update) => setDateRange(update)}
-          dateFormat="dd-MM-yyyy"
-          placeholderText="Выберите даты"
-          className="date-picker"
-        />
-
-        {/* Buttons */}
-        <button className="search-button" onClick={fetchIncidents}>
-          🔍 Поиск
-        </button>
-        <button className="clear-button" onClick={clearFilters}>
-          ❌ Очистить
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <h1 style={{ margin: 0 }}>История обращений</h1>
+        <button className="filter-toggle-button" onClick={toggleFilterSidebar}>
+          {isFilterSidebarOpen ? "Скрыть фильтры" : "Показать фильтры"}
         </button>
       </div>
+      
+      {/* Filter Sidebar Component */}
+      <FilterSidebar
+        isOpen={isFilterSidebarOpen}
+        toggleSidebar={toggleFilterSidebar}
+        searchTitle={searchTitle}
+        setSearchTitle={setSearchTitle}
+        searchDescription={searchDescription}
+        setSearchDescription={setSearchDescription}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
+        typedAddress={typedAddress}
+        setTypedAddress={setTypedAddress}
+        selectedLocationId={selectedLocationId}
+        setSelectedLocationId={setSelectedLocationId}
+        selectedUserId={selectedUserId}
+        setSelectedUserId={setSelectedUserId}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        incidentTypes={incidentTypes}
+        locations={locations}
+        users={users}
+        fetchIncidents={fetchIncidents}
+        clearFilters={clearFilters}
+      />
 
       {/* Incidents List */}
       <DashboardSection title="Все обращения">

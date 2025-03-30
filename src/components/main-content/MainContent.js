@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Card from "../card/Card";
 import Graph from "../graph/Graph";
 import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 import DashboardSection from "../dashboard-section/DashboardSection";
 import "../../App.css";
 import { fetchWithAuth } from "../../utils/api";
@@ -83,10 +84,14 @@ const MainContent = () => {
                         startDate={startDate}
                         endDate={endDate}
                         onChange={(update) => setDateRange(update)}
-                        dateFormat="dd-MM-yyyy"
+                        dateFormat="dd.MM.yyyy"
                         inline
+                        locale={ru}
+                        showMonthDropdown
+                        showYearDropdown
+                        dropdownMode="select"
                       />
-                      <p
+                      <span
                         className="history-link-hint"
                         onClick={() => {
                           if (startDate && endDate) {
@@ -109,8 +114,8 @@ const MainContent = () => {
                           cursor: startDate && endDate ? "pointer" : "default"
                         }}
                       >
-                        🔍 Показать инциденты за выбранный период
-                      </p>
+                        🔍 Показать инциденты
+                      </span>
                     </div>
                   </Card>
                 </div>
