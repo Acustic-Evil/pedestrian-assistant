@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { format, isSameDay, parseISO } from "date-fns";
+import { fetchWithAuth } from "../../utils/api";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -27,8 +28,8 @@ const Graph = ({ startDate, endDate }) => {
     const formattedEnd = format(end, "dd-MM-yyyy");
 
     try {
-      const response = await fetch(
-        `${API_URL}/incidents/search/date-range?startDate=${formattedStart}&endDate=${formattedEnd}`
+      const response = await fetchWithAuth(
+        `${API_URL}/user/incidents/search/date-range?startDate=${formattedStart}&endDate=${formattedEnd}`
       );
       if (!response.ok) throw new Error("Failed to fetch data");
       const incidents = await response.json();

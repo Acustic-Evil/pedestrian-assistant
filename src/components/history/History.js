@@ -5,6 +5,7 @@ import DatePicker from "react-datepicker";
 import "../../App.css";
 import { format, isSameDay, parseISO, parse } from "date-fns";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { fetchWithAuth } from "../../utils/api";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -73,7 +74,7 @@ const History = () => {
 
   const fetchIncidentTypes = async () => {
     try {
-      const response = await fetch(`${API_URL}/incident-types`);
+      const response = await fetchWithAuth(`${API_URL}/user/incident-types`);
       if (!response.ok) throw new Error("Failed to fetch incident types");
       const data = await response.json();
       setIncidentTypes(data);
@@ -84,7 +85,7 @@ const History = () => {
 
   const fetchLocations = async () => {
     try {
-      const response = await fetch(`${API_URL}/locations`);
+      const response = await fetchWithAuth(`${API_URL}/user/locations`);
       if (!response.ok) throw new Error("Failed to fetch locations");
       const data = await response.json();
       setLocations(data);
@@ -95,7 +96,7 @@ const History = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${API_URL}/users`);
+      const response = await fetchWithAuth(`${API_URL}/user/users`);
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
       setUsers(data);
@@ -107,7 +108,7 @@ const History = () => {
   const fetchIncidents = async () => {
     setLoading(true);
     try {
-      let url = `${API_URL}/incidents/search/filters?`;
+      let url = `${API_URL}/user/incidents/search/filters?`;
 
       // Title, Description
       if (searchTitle) url += `&title=${encodeURIComponent(searchTitle)}`;
@@ -136,7 +137,7 @@ const History = () => {
         url += `&startDateStr=${formattedStart}&endDateStr=${formattedEnd}`;
       }
 
-      const response = await fetch(url);
+      const response = await fetchWithAuth(url);
       if (!response.ok) throw new Error("Failed to fetch incidents");
 
       const data = await response.json();

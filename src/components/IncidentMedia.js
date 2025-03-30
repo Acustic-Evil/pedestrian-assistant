@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { fetchWithAuth } from "../utils/api";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -12,7 +13,7 @@ const IncidentMedia = ({ incidentId }) => {
 
   const fetchMedia = async () => {
     try {
-      const response = await fetch(`${API_URL}/media/incident/${incidentId}`);
+      const response = await fetchWithAuth(`${API_URL}/user/media/incident/${incidentId}`);
       if (!response.ok) throw new Error("Failed to fetch media");
 
       // Convert response to a blob

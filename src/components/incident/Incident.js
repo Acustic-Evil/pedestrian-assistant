@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "../../App.css"; // Import styles
 import "./Incident.css"; 
+import { fetchWithAuth } from "../../utils/api";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -18,7 +19,7 @@ const IncidentDetails = () => {
 
   const fetchIncidentDetails = async () => {
     try {
-      const response = await fetch(`${API_URL}/incidents/${id}`);
+      const response = await fetchWithAuth(`${API_URL}/user/incidents/${id}`);
       if (!response.ok) throw new Error("Failed to fetch incident details");
       const data = await response.json();
       setIncident(data);
@@ -32,7 +33,7 @@ const IncidentDetails = () => {
 
   const fetchMediaFiles = async () => {
     try {
-      const response = await fetch(`${API_URL}/media/incident/${id}`);
+      const response = await fetchWithAuth(`${API_URL}/user/media/incident/${id}`);
       if (!response.ok) throw new Error("Failed to fetch media");
 
       const mediaUrls = await response.json(); // ✅ List of media URLs

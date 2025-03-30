@@ -7,6 +7,7 @@ import Graph from "../graph/Graph";
 import { format } from "date-fns";
 import DashboardSection from "../dashboard-section/DashboardSection";
 import "../../App.css";
+import { fetchWithAuth } from "../../utils/api";
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -39,7 +40,7 @@ const MainContent = () => {
   const fetchRecentIncidents = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/incidents`);
+      const response = await fetchWithAuth(`${API_URL}/user/incidents`);
       if (!response.ok) throw new Error("Failed to fetch data");
       const allIncidents = await response.json();
 
@@ -85,10 +86,10 @@ const MainContent = () => {
                         dateFormat="dd-MM-yyyy"
                         inline
                       />
-                      {startDate && endDate && (
-                        <p
-                          className="history-link-hint"
-                          onClick={() => {
+                      <p
+                        className="history-link-hint"
+                        onClick={() => {
+                          if (startDate && endDate) {
                             const formattedStart = format(
                               startDate,
                               "dd-MM-yyyy"
@@ -101,11 +102,15 @@ const MainContent = () => {
                             );
 
                             window.location.href = "/history";
-                          }}
-                        >
-                          🔍 Показать инциденты за выбранный период
-                        </p>
-                      )}
+                          }
+                        }}
+                        style={{
+                          opacity: startDate && endDate ? 1 : 0.5,
+                          cursor: startDate && endDate ? "pointer" : "default"
+                        }}
+                      >
+                        🔍 Показать инциденты за выбранный период
+                      </p>
                     </div>
                   </Card>
                 </div>
