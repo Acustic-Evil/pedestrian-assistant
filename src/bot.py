@@ -1,5 +1,5 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters, CallbackQueryHandler
-from handlers.commands import SELECT_TYPE, confirm_send, delete_file, edit_data_request, edit_field, save_edited_field, save_location, set_incident_type, show_files_callback, start, start_incident, set_title, set_description, cancel, add_file, finish_incident, TITLE, DESCRIPTION
+from handlers.commands import SELECT_TYPE, confirm_send, delete_file, edit_data_request, edit_field, save_edited_field, save_location, set_incident_type, show_files, show_files_callback, start, start_incident, set_title, set_description, cancel, add_file, finish_incident, TITLE, DESCRIPTION
 from utils.logger import logger
 from dotenv import load_dotenv
 import os
@@ -50,7 +50,7 @@ def main():
     application.add_handler(MessageHandler(filters.Regex(r"^✏️ Редактировать$"), edit_data_request))
     application.add_handler(CommandHandler("edit", edit_data_request))
     
-    application.add_handler(MessageHandler(filters.Regex(r"^📁 Файлы$"), lambda update, context: show_files_callback(update, context)))
+    application.add_handler(MessageHandler(filters.Regex(r"^📁 Файлы$"), show_files))
     
     application.add_handler(CallbackQueryHandler(edit_field, pattern="edit_.*"))
     application.add_handler(CallbackQueryHandler(show_files_callback, pattern="show_files"))

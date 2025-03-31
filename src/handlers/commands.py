@@ -384,9 +384,118 @@ def generate_file_keyboard():
 
     return InlineKeyboardMarkup(keyboard)
 
+async def show_files(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the "📁 Файлы" button press from the main keyboard.
+    Shows all uploaded files with options to delete them.
+    """
+    logger.info(f"User {update.effective_user.username} requested to view files.")
+    
+    if not incident_data["files"]:
+        await update.message.reply_text("Файлы не добавлены. Отправьте фото или видео, чтобы добавить файлы.")
+        return
+    
+    # Отправляем каждое фото/видео пользователю с кнопками
+    for idx, file in enumerate(incident_data["files"]):
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(f"Удалить этот файл", callback_data=f"delete_file_{idx}")]
+        ])
+
+        try:
+            # Если это фото
+            if file.file_id and file.file_path.endswith(('.jpg', '.png')):
+                await context.bot.send_photo(
+                    chat_id=update.message.chat_id,
+                    photo=file.file_id,
+                    reply_markup=keyboard
+                )
+            # Если это видео
+            elif file.file_id and file.file_path.endswith('.mp4'):
+                await context.bot.send_video(
+                    chat_id=update.message.chat_id,
+                    video=file.file_id,
+                    reply_markup=keyboard
+                )
+            else:
+                await context.bot.send_message(
+                    chat_id=update.message.chat_id,
+                    text=f"Неизвестный формат файла: {file.file_id}"
+                )
+        except Exception as e:
+            logger.error(f"Ошибка отправки файла: {e}")
+            await context.bot.send_message(
+                chat_id=update.message.chat_id,
+                text=f"Не удалось отправить файл {idx + 1}."
+            )
+
+    # Кнопка для удаления всех файлов
+    delete_all_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Удалить все файлы", callback_data="delete_all_files")]
+    ])
+    await context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Выберите действие для всех файлов:",
+        reply_markup=delete_all_keyboard
+    )
+
+async def show_files(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the "📁 Файлы" button press from the main keyboard.
+    Shows all uploaded files with options to delete them.
+    """
+    logger.info(f"User {update.effective_user.username} requested to view files.")
+    
+    if not incident_data["files"]:
+        await update.message.reply_text("Файлы не добавлены. Отправьте фото или видео, чтобы добавить файлы.")
+        return
+    
+    # Отправляем каждое фото/видео пользователю с кнопками
+    for idx, file in enumerate(incident_data["files"]):
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(f"Удалить этот файл", callback_data=f"delete_file_{idx}")]
+        ])
+
+        try:
+            # Если это фото
+            if file.file_id and file.file_path.endswith(('.jpg', '.png')):
+                await context.bot.send_photo(
+                    chat_id=update.message.chat_id,
+                    photo=file.file_id,
+                    reply_markup=keyboard
+                )
+            # Если это видео
+            elif file.file_id and file.file_path.endswith('.mp4'):
+                await context.bot.send_video(
+                    chat_id=update.message.chat_id,
+                    video=file.file_id,
+                    reply_markup=keyboard
+                )
+            else:
+                await context.bot.send_message(
+                    chat_id=update.message.chat_id,
+                    text=f"Неизвестный формат файла: {file.file_id}"
+                )
+        except Exception as e:
+            logger.error(f"Ошибка отправки файла: {e}")
+            await context.bot.send_message(
+                chat_id=update.message.chat_id,
+                text=f"Не удалось отправить файл {idx + 1}."
+            )
+
+    # Кнопка для удаления всех файлов
+    delete_all_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Удалить все файлы", callback_data="delete_all_files")]
+    ])
+    await context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Выберите действие для всех файлов:",
+        reply_markup=delete_all_keyboard
+    )
+
 async def show_files_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Sends each uploaded file back to the user with an option to delete.
+    This function is called from callback queries.
     """
     query = update.callback_query
     await query.answer()
