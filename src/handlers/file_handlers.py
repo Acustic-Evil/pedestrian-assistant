@@ -34,9 +34,17 @@ async def process_file(update, incident_data):
     if not validate_file(file, file_path, max_size_mb):
         logger.warning(f"Файл {file.file_id} не прошёл валидацию.")
         raise ValueError("Файл не соответствует ограничениям.")
-
+    
+    # Создаем словарь с метаданными файла вместо добавления атрибутов к объекту File
+    file_data = {
+        'file': file,
+        'file_type': file_type,
+        'file_path': file_path,
+        'file_id': file.file_id
+    }
+    
     # Добавление файла в инцидент
-    incident_data['files'].append(file)
+    incident_data['files'].append(file_data)
     logger.info(f"{file_type.capitalize()} добавлено: {file.file_id}")
 
 async def finalize_incident(incident_data):

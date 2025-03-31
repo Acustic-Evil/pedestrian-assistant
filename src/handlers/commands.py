@@ -402,24 +402,53 @@ async def show_files(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
 
         try:
-            # Если это фото
-            if file.file_id and file.file_path.endswith(('.jpg', '.png')):
-                await context.bot.send_photo(
-                    chat_id=update.message.chat_id,
-                    photo=file.file_id,
-                    reply_markup=keyboard
-                )
-            # Если это видео
-            elif file.file_id and file.file_path.endswith('.mp4'):
-                await context.bot.send_video(
-                    chat_id=update.message.chat_id,
-                    video=file.file_id,
-                    reply_markup=keyboard
-                )
-            else:
+            # Проверяем тип файла в словаре метаданных
+            if isinstance(file, dict) and 'file_type' in file:
+                file_id = file.get('file_id')
+                if file['file_type'] == 'photo':
+                    await context.bot.send_photo(
+                        chat_id=update.message.chat_id,
+                        photo=file_id,
+                        reply_markup=keyboard
+                    )
+                elif file['file_type'] == 'video':
+                    await context.bot.send_video(
+                        chat_id=update.message.chat_id,
+                        video=file_id,
+                        reply_markup=keyboard
+                    )
+                else:
+                    await context.bot.send_message(
+                        chat_id=update.message.chat_id,
+                        text=f"Неизвестный формат файла: {file_id}"
+                    )
+            # Запасной вариант - проверка по расширению файла
+            elif isinstance(file, dict) and 'file_path' in file:
+                file_id = file.get('file_id')
+                if file['file_path'].endswith(('.jpg', '.png')):
+                    await context.bot.send_photo(
+                        chat_id=update.message.chat_id,
+                        photo=file_id,
+                        reply_markup=keyboard
+                    )
+                elif file['file_path'].endswith('.mp4'):
+                    await context.bot.send_video(
+                        chat_id=update.message.chat_id,
+                        video=file_id,
+                        reply_markup=keyboard
+                    )
+                else:
+                    await context.bot.send_message(
+                        chat_id=update.message.chat_id,
+                        text=f"Неизвестный формат файла: {file_id}"
+                    )
+            # Обратная совместимость со старым форматом
+            elif hasattr(file, 'file_id'):
+                file_id = file.file_id
+                logger.warning(f"Файл в старом формате: {file_id}")
                 await context.bot.send_message(
                     chat_id=update.message.chat_id,
-                    text=f"Неизвестный формат файла: {file.file_id}"
+                    text=f"Неизвестный формат файла: {file_id}"
                 )
         except Exception as e:
             logger.error(f"Ошибка отправки файла: {e}")
@@ -456,24 +485,53 @@ async def show_files(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
 
         try:
-            # Если это фото
-            if file.file_id and file.file_path.endswith(('.jpg', '.png')):
-                await context.bot.send_photo(
-                    chat_id=update.message.chat_id,
-                    photo=file.file_id,
-                    reply_markup=keyboard
-                )
-            # Если это видео
-            elif file.file_id and file.file_path.endswith('.mp4'):
-                await context.bot.send_video(
-                    chat_id=update.message.chat_id,
-                    video=file.file_id,
-                    reply_markup=keyboard
-                )
-            else:
+            # Проверяем тип файла в словаре метаданных
+            if isinstance(file, dict) and 'file_type' in file:
+                file_id = file.get('file_id')
+                if file['file_type'] == 'photo':
+                    await context.bot.send_photo(
+                        chat_id=update.message.chat_id,
+                        photo=file_id,
+                        reply_markup=keyboard
+                    )
+                elif file['file_type'] == 'video':
+                    await context.bot.send_video(
+                        chat_id=update.message.chat_id,
+                        video=file_id,
+                        reply_markup=keyboard
+                    )
+                else:
+                    await context.bot.send_message(
+                        chat_id=update.message.chat_id,
+                        text=f"Неизвестный формат файла: {file_id}"
+                    )
+            # Запасной вариант - проверка по расширению файла
+            elif isinstance(file, dict) and 'file_path' in file:
+                file_id = file.get('file_id')
+                if file['file_path'].endswith(('.jpg', '.png')):
+                    await context.bot.send_photo(
+                        chat_id=update.message.chat_id,
+                        photo=file_id,
+                        reply_markup=keyboard
+                    )
+                elif file['file_path'].endswith('.mp4'):
+                    await context.bot.send_video(
+                        chat_id=update.message.chat_id,
+                        video=file_id,
+                        reply_markup=keyboard
+                    )
+                else:
+                    await context.bot.send_message(
+                        chat_id=update.message.chat_id,
+                        text=f"Неизвестный формат файла: {file_id}"
+                    )
+            # Обратная совместимость со старым форматом
+            elif hasattr(file, 'file_id'):
+                file_id = file.file_id
+                logger.warning(f"Файл в старом формате: {file_id}")
                 await context.bot.send_message(
                     chat_id=update.message.chat_id,
-                    text=f"Неизвестный формат файла: {file.file_id}"
+                    text=f"Неизвестный формат файла: {file_id}"
                 )
         except Exception as e:
             logger.error(f"Ошибка отправки файла: {e}")
@@ -511,24 +569,53 @@ async def show_files_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
         ])
 
         try:
-            # Если это фото
-            if file.file_id and file.file_path.endswith(('.jpg', '.png')):
-                await context.bot.send_photo(
-                    chat_id=query.message.chat_id,
-                    photo=file.file_id,
-                    reply_markup=keyboard
-                )
-            # Если это видео
-            elif file.file_id and file.file_path.endswith('.mp4'):
-                await context.bot.send_video(
-                    chat_id=query.message.chat_id,
-                    video=file.file_id,
-                    reply_markup=keyboard
-                )
-            else:
+            # Проверяем тип файла в словаре метаданных
+            if isinstance(file, dict) and 'file_type' in file:
+                file_id = file.get('file_id')
+                if file['file_type'] == 'photo':
+                    await context.bot.send_photo(
+                        chat_id=query.message.chat_id,
+                        photo=file_id,
+                        reply_markup=keyboard
+                    )
+                elif file['file_type'] == 'video':
+                    await context.bot.send_video(
+                        chat_id=query.message.chat_id,
+                        video=file_id,
+                        reply_markup=keyboard
+                    )
+                else:
+                    await context.bot.send_message(
+                        chat_id=query.message.chat_id,
+                        text=f"Неизвестный формат файла: {file_id}"
+                    )
+            # Запасной вариант - проверка по расширению файла
+            elif isinstance(file, dict) and 'file_path' in file:
+                file_id = file.get('file_id')
+                if file['file_path'].endswith(('.jpg', '.png')):
+                    await context.bot.send_photo(
+                        chat_id=query.message.chat_id,
+                        photo=file_id,
+                        reply_markup=keyboard
+                    )
+                elif file['file_path'].endswith('.mp4'):
+                    await context.bot.send_video(
+                        chat_id=query.message.chat_id,
+                        video=file_id,
+                        reply_markup=keyboard
+                    )
+                else:
+                    await context.bot.send_message(
+                        chat_id=query.message.chat_id,
+                        text=f"Неизвестный формат файла: {file_id}"
+                    )
+            # Обратная совместимость со старым форматом
+            elif hasattr(file, 'file_id'):
+                file_id = file.file_id
+                logger.warning(f"Файл в старом формате: {file_id}")
                 await context.bot.send_message(
                     chat_id=query.message.chat_id,
-                    text=f"Неизвестный формат файла: {file.file_id}"
+                    text=f"Неизвестный формат файла: {file_id}"
                 )
         except Exception as e:
             logger.error(f"Ошибка отправки файла: {e}")
