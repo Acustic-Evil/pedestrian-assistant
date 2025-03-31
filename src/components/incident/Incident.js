@@ -118,7 +118,12 @@ const IncidentDetails = () => {
                 key={index} 
                 controls 
                 className="media-item"
-                onClick={() => openModal(file)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.target.pause();
+                  openModal(file);
+                }}
+                preload="metadata"
               >
                 <source src={file.url} type="video/mp4" />
                 Ваш браузер не поддерживает видео.
@@ -143,7 +148,7 @@ const IncidentDetails = () => {
           <div className="media-modal-content" ref={modalRef}>
             <button className="modal-close-btn" onClick={closeModal}>×</button>
             {selectedMedia && selectedMedia.type === "video" ? (
-              <video controls className="modal-media">
+              <video controls className="modal-media" autoPlay={false} preload="metadata">
                 <source src={selectedMedia.url} type="video/mp4" />
                 Ваш браузер не поддерживает видео.
               </video>

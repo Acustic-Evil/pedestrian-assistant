@@ -33,7 +33,7 @@
   .full-history {
     width: 100%; /* Take full width */
     max-width: 100%; /* Prevent restrictions */
-    max-height: 45.5vh;
+    max-height: 63vh;
     display: flex;
     flex-direction: column;
     gap: 1rem;
