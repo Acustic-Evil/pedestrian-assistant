@@ -242,7 +242,7 @@ public class MediaServiceImpl implements MediaService {
         String dateFolder = pathParts[pathParts.length - 2];  // e.g., 2025_03_18
         String reportFolder = pathParts[pathParts.length - 1]; // e.g., report_1_2025_03_18
 
-        return "http://localhost:8080/api/media/file/" + dateFolder + "/" + reportFolder + "/" + filename;
+        return "http://localhost:8080/api/user/media/file/" + dateFolder + "/" + reportFolder + "/" + filename;
     }
 
 }

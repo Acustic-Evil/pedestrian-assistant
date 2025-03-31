@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/user/media")
+@CrossOrigin("http://localhost:3000/")
 public class MediaController {
 
     private final MediaService mediaService;
