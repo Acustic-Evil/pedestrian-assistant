@@ -13,7 +13,7 @@ public class IncidentSpecifications {
             if (title == null || title.trim().isEmpty()) {
                 return cb.conjunction();
             }
-            return cb.like(cb.lower(root.get("title")), "%" + title.trim().toLowerCase() + "%");
+            return cb.like(cb.lower(root.get("title")), "%" + title.trim() + "%");
         };
     }
 
@@ -22,7 +22,7 @@ public class IncidentSpecifications {
             if (description == null || description.trim().isEmpty()) {
                 return cb.conjunction();
             }
-            return cb.like(cb.lower(root.get("description")), "%" + description.trim().toLowerCase() + "%");
+            return cb.like(cb.lower(root.get("description")), "%" + description.trim() + "%");
         };
     }
 
@@ -35,7 +35,7 @@ public class IncidentSpecifications {
             if (locationId != null) {
                 return cb.equal(root.get("location").get("id"), locationId);
             } else if (address != null && !address.trim().isEmpty()) {
-                return cb.like(cb.lower(root.get("location").get("address")), "%" + address.trim().toLowerCase() + "%");
+                return cb.like(cb.lower(root.get("location").get("address")), "%" + address.trim() + "%");
             }
             return cb.conjunction();
         };
