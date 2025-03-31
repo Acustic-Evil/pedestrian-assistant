@@ -22,20 +22,26 @@ def generate_keyboard(minimal=False):
     If minimal=True, generates a keyboard with only /start_incident.
     """
     if minimal:
-        return ReplyKeyboardMarkup([["/start_incident"]], resize_keyboard=True, one_time_keyboard=False)
+        return ReplyKeyboardMarkup([["🚀 Начать новый инцидент"]], resize_keyboard=True, one_time_keyboard=False)
 
-    keyboard = [["/start_incident"]]
+    keyboard = [["🚀 Начать новый инцидент"]]
     
+    # Если есть какие-то данные инцидента, показываем соответствующие кнопки
     if incident_data['title'] or incident_data['description'] or incident_data.get('location') or incident_data.get('files'):
-        keyboard.append([KeyboardButton("Отправить местоположение", request_location=True)])
-        keyboard.append(["/edit"])
-        keyboard.append(["/cancel"])
-        if ["/start_incident"] in keyboard:  # Проверка перед удалением
-            keyboard.remove(["/start_incident"])
-
-    # Добавляем кнопку /finish, если все поля заполнены
-    if incident_data['title'] and incident_data['description'] and incident_data.get('files') and incident_data.get('address'):
-        keyboard.append(["/finish"])
+        keyboard = []
+        keyboard.append([KeyboardButton("📍 Отправить местоположение", request_location=True)])
+        
+        # Добавляем кнопки для управления инцидентом
+        incident_buttons = []
+        if incident_data.get('files'):
+            incident_buttons.append("📁 Файлы")
+        incident_buttons.append("✏️ Редактировать")
+        incident_buttons.append("❌ Отменить")
+        keyboard.append(incident_buttons)
+        
+        # Добавляем кнопку отправки, если все необходимые поля заполнены
+        if incident_data['title'] and incident_data['description'] and incident_data.get('files') and incident_data.get('address'):
+            keyboard.append(["✅ Отправить инцидент"])
 
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
 
@@ -48,11 +54,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"User {update.effective_user.username} used /start")
 
     commands_list = """
-Добро пожаловать! Вот доступные команды:
+Добро пожаловать в помощник пешехода! 👋
 
-/start_incident - Начать новый инцидент
-/finish - Завершить инцидент и отправить данные
-
+Нажмите кнопку "🚀 Начать новый инцидент" для создания сообщения о нарушении.
 """
     reply_markup = generate_keyboard()
     await update.message.reply_text(commands_list, reply_markup=reply_markup)
@@ -69,10 +73,10 @@ async def start_incident(update: Update, context: ContextTypes.DEFAULT_TYPE):
     incident_data['incidentType'] = None
     incident_data['address'] = None
 
-    keyboard = [["/cancel"]]
+    keyboard = [["❌ Отменить"]]
     
     await update.message.reply_text(
-        "Введите название инцидента (например, \"Неправильная парковка\").",
+        "📝 Введите название инцидента (например, \"Неправильная парковка\").",
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
     )
     
@@ -85,10 +89,11 @@ async def set_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     incident_data['title'] = update.message.text
     logger.info(f"Incident title set: {incident_data['title']}")
     
-    reply_markup = generate_keyboard()
+    keyboard = [["❌ Отменить"]]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
     
     await update.message.reply_text(
-        "Теперь введите описание инцидента (например, \"Машина припаркована на тротуаре\").",
+        "✅ Название сохранено! Теперь введите описание инцидента (например, \"Машина припаркована на тротуаре\").",
         reply_markup=reply_markup
     )
     
@@ -101,6 +106,9 @@ async def set_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
     incident_data['description'] = update.message.text
     logger.info(f"Incident description set: {incident_data['description']}")
 
+    # Сообщаем пользователю, что описание сохранено
+    await update.message.reply_text("✅ Описание сохранено! Теперь выберите тип инцидента.")
+    
     # Переход к выбору типа инцидента
     await choose_incident_type(update, context)
     return SELECT_TYPE
@@ -125,19 +133,19 @@ async def choose_incident_type(update: Update, context: ContextTypes.DEFAULT_TYP
     context.user_data["incident_types"] = {t["name"]: t["id"] for t in incident_types}
 
     # Генерация клавиатуры с типами инцидентов
-    keyboard = [[t["name"]] for t in incident_types] + [["/cancel"]]
+    keyboard = [[t["name"]] for t in incident_types] + [["❌ Отменить"]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
 
     # Отправляем сообщение с клавиатурой
     if update.callback_query:
         await update.callback_query.answer()
         await update.callback_query.message.reply_text(
-            "Выберите новый тип инцидента из предложенного списка:",
+            "🔍 Выберите тип инцидента из списка ниже:",
             reply_markup=reply_markup
         )
     else:
         await update.message.reply_text(
-            "Выберите новый тип инцидента из предложенного списка:",
+            "🔍 Выберите тип инцидента из списка ниже:",
             reply_markup=reply_markup
         )
 
@@ -156,7 +164,9 @@ async def set_incident_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Available types: {incident_types}")
 
     # Проверяем, выбран ли тип из предложенного списка
-    if selected_type in incident_types:
+    if selected_type == "❌ Отменить":
+        return await cancel(update, context)
+    elif selected_type in incident_types:
         incident_data["incidentType"] = {
             "id": incident_types[selected_type],
             "name": selected_type,
@@ -169,14 +179,15 @@ async def set_incident_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Отправляем сообщение с подтверждением и новой клавиатурой
         await update.message.reply_text(
-            f"Тип инцидента установлен: {selected_type}.\n"
-            "Теперь вы можете отправить фото, видео или местоположение.",
+            f"✅ Тип инцидента установлен: {selected_type}\n\n"
+            "📸 Теперь отправьте фото или видео нарушения\n"
+            "📍 Также не забудьте отправить местоположение",
             reply_markup=reply_markup
         )
         return ConversationHandler.END
     else:
         # Если тип не найден, отправляем сообщение об ошибке
-        await update.message.reply_text("Ошибка: выберите тип инцидента из предложенного списка.")
+        await update.message.reply_text("⚠️ Пожалуйста, выберите тип инцидента из предложенного списка.")
         return SELECT_TYPE
 
 
@@ -189,10 +200,11 @@ async def add_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await process_file(update, incident_data)
         reply_markup = generate_keyboard()
-        await update.message.reply_text("Файл успешно добавлен.", reply_markup=reply_markup)
+        files_count = len(incident_data.get("files", []))
+        await update.message.reply_text(f"✅ Файл успешно добавлен! (Всего файлов: {files_count})", reply_markup=reply_markup)
     except Exception as e:
         logger.error(f"Error while adding file: {e}")
-        await update.message.reply_text("Ошибка при добавлении файла.")
+        await update.message.reply_text("⚠️ Ошибка при добавлении файла. Пожалуйста, попробуйте еще раз.")
 
 async def save_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -207,7 +219,7 @@ async def save_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Проверка ответа от бэкенда
         if "error" in backend_response:
-            await update.message.reply_text("Ошибка при добавлении местоположения.")
+            await update.message.reply_text("⚠️ Не удалось определить местоположение. Пожалуйста, попробуйте еще раз.")
             logger.error(f"Ошибка при проверке местоположения: {backend_response['error']}")
             return
 
@@ -219,14 +231,21 @@ async def save_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         incident_data['address'] = backend_response.get("address", "Адрес не найден")
 
-        # Проверяем, нужно ли показывать кнопку /finish
+        # Проверяем, нужно ли показывать кнопку отправки
         reply_markup = generate_keyboard()
 
         await update.message.reply_text(
-            f"Местоположение сохранено: широта {latitude}, долгота {longitude}.\n"
-            f"Адрес: {incident_data['address']}",
+            f"📍 Местоположение сохранено!\n"
+            f"📌 Адрес: {incident_data['address']}",
             reply_markup=reply_markup
         )
+        
+        # Если все необходимые данные заполнены, подсказываем пользователю следующий шаг
+        if incident_data['title'] and incident_data['description'] and incident_data.get('files') and incident_data.get('address'):
+            await update.message.reply_text(
+                "✅ Все необходимые данные заполнены! Нажмите кнопку 'Отправить инцидент' для завершения.",
+                reply_markup=reply_markup
+            )
     else:
         await update.message.reply_text("Ошибка: местоположение не отправлено.")
 
@@ -239,13 +258,13 @@ async def edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Определяем, что редактировать
     if query.data == "edit_title":
-        await query.edit_message_text("Введите новое название инцидента:")
+        await query.edit_message_text("✏️ Введите новое название инцидента:")
         context.user_data["editing_field"] = "title"
     elif query.data == "edit_description":
-        await query.edit_message_text("Введите новое описание инцидента:")
+        await query.edit_message_text("✏️ Введите новое описание инцидента:")
         context.user_data["editing_field"] = "description"
     elif query.data == "edit_location":
-        await query.edit_message_text("Пожалуйста, отправьте новое местоположение.")
+        await query.edit_message_text("📍 Пожалуйста, отправьте новое местоположение, используя кнопку в клавиатуре.")
         context.user_data["editing_field"] = "location"
     elif query.data == "edit_type":
         # Переход к выбору типа инцидента
@@ -259,17 +278,17 @@ async def save_edited_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     editing_field = context.user_data.get("editing_field")
     if not editing_field:
-        await update.message.reply_text("Ошибка: нет редактируемого поля.")
+        await update.message.reply_text("⚠️ Нет активного поля для редактирования.")
         return
 
     if editing_field == "title":
         incident_data["title"] = update.message.text
-        await update.message.reply_text(f"Название обновлено: {incident_data['title']}")
+        await update.message.reply_text(f'✅ Название успешно обновлено: "{incident_data["title"]}"')
     elif editing_field == "description":
         incident_data["description"] = update.message.text
-        await update.message.reply_text(f"Описание обновлено: {incident_data['description']}")
+        await update.message.reply_text(f'✅ Описание успешно обновлено: "{incident_data["description"]}"')
     elif editing_field == "location":
-        await update.message.reply_text("Местоположение будет обновлено после отправки.")
+        await update.message.reply_text("📍 Пожалуйста, используйте кнопку 'Отправить местоположение' в клавиатуре.")
     elif editing_field == "incident_type":
         # Проверяем выбранный тип инцидента
         selected_type = update.message.text
@@ -281,9 +300,9 @@ async def save_edited_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "name": selected_type,
             }
             reply_markup = generate_keyboard()
-            await update.message.reply_text(f"Тип инцидента обновлён: {selected_type}", reply_markup=reply_markup)
+            await update.message.reply_text(f"✅ Тип инцидента успешно обновлён: {selected_type}", reply_markup=reply_markup)
         else:
-            await update.message.reply_text("Ошибка: выберите тип инцидента из предложенного списка.")
+            await update.message.reply_text("⚠️ Пожалуйста, выберите тип инцидента из предложенного списка.")
             return
 
     # Удаляем флаг редактирования
@@ -291,7 +310,8 @@ async def save_edited_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Показываем обновлённое сообщение с данными
     summary = generate_summary_message()
-    await update.message.reply_text(summary)
+    reply_markup = generate_keyboard()
+    await update.message.reply_text("📋 Обновленные данные инцидента:\n\n" + summary, reply_markup=reply_markup)
 
 
 
@@ -308,12 +328,12 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info("Incident data cleared.")
     
     keyboard = [
-        ["/start_incident"],
+        ["🚀 Начать новый инцидент"],
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
     logger.info(f"User {update.effective_user.username} cancelled the incident creation.")
     await update.message.reply_text(
-        "Создание инцидента отменено.", reply_markup=reply_markup
+        "❌ Создание инцидента отменено. Вы можете начать заново, когда будете готовы.", reply_markup=reply_markup
     )
     return ConversationHandler.END
 
@@ -444,24 +464,44 @@ async def delete_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def finish_incident(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Shows the current data and gives ability to edit it before sending
+    Directly sends the incident data to the backend without additional confirmation steps
     """
-    logger.info(f"User {update.effective_user.username} used /finish_incident.")
+    logger.info(f"User {update.effective_user.username} used finish_incident.")
 
-    # Генерируем сообщение с текущими данными
-    summary = generate_summary_message()
+    # Проверяем, заполнены ли все поля
+    if not incident_data["title"] or not incident_data["description"] or not incident_data.get("files") or not incident_data.get("address"):
+        await update.message.reply_text("⚠️ Не все данные заполнены. Пожалуйста, убедитесь, что вы указали название, описание, добавили файлы и местоположение.")
+        return
 
-    # Кнопки для редактирования и подтверждения
-    keyboard = [
-        [InlineKeyboardButton("Редактировать название", callback_data="edit_title")],
-        [InlineKeyboardButton("Редактировать описание", callback_data="edit_description")],
-        [InlineKeyboardButton("Редактировать местоположение", callback_data="edit_location")],
-        [InlineKeyboardButton("Редактировать файлы", callback_data="show_files")],
-        [InlineKeyboardButton("Отправить инцидент", callback_data="confirm_send")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    # Показываем сообщение о начале отправки
+    sending_message = await update.message.reply_text("⏳ Отправляем данные...")
 
-    await update.message.reply_text(summary, reply_markup=reply_markup)
+    # Логика отправки данных
+    try:
+        zip_buffer = await finalize_incident(incident_data)
+        await send_incident_to_backend(zip_buffer, incident_data, update)
+        
+        # Обновляем сообщение об успешной отправке
+        await sending_message.edit_text("✅ Инцидент успешно отправлен!")
+        logger.info("Incident successfully sent to the backend.")
+
+        # Очистка данных
+        incident_data['files'].clear()
+        incident_data['title'] = None
+        incident_data['description'] = None
+        incident_data['address'] = None
+        incident_data["incidentType"] = None
+        logger.info("Incident data cleared.")
+
+        # Генерация минимальной клавиатуры
+        reply_markup = generate_keyboard(minimal=True)
+
+        # Отправляем новое сообщение с клавиатурой
+        await update.message.reply_text("🚀 Хотите сообщить о новом инциденте?", reply_markup=reply_markup)
+
+    except Exception as e:
+        logger.error(f"Error while sending data: {e}")
+        await sending_message.edit_text("⚠️ Ошибка при отправке данных. Пожалуйста, попробуйте еще раз.")
     
 async def edit_data_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -472,15 +512,18 @@ async def edit_data_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Кнопки для редактирования и подтверждения
     keyboard = [
-        [InlineKeyboardButton("Редактировать название", callback_data="edit_title")],
-        [InlineKeyboardButton("Редактировать описание", callback_data="edit_description")],
-        [InlineKeyboardButton("Редактировать местоположение", callback_data="edit_location")],
-        [InlineKeyboardButton("Редактировать тип инцидента", callback_data="edit_type")],
-        [InlineKeyboardButton("Редактировать файлы", callback_data="show_files")]
+        [InlineKeyboardButton("✏️ Название", callback_data="edit_title"), InlineKeyboardButton("✏️ Описание", callback_data="edit_description")],
+        [InlineKeyboardButton("📍 Местоположение", callback_data="edit_location"), InlineKeyboardButton("🔍 Тип инцидента", callback_data="edit_type")],
+        [InlineKeyboardButton("📁 Управление файлами", callback_data="show_files")]
     ]
+    
+    # Если все необходимые данные заполнены, добавляем кнопку отправки
+    if incident_data['title'] and incident_data['description'] and incident_data.get('files') and incident_data.get('address'):
+        keyboard.append([InlineKeyboardButton("✅ Отправить инцидент", callback_data="confirm_send")])
+    
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text(summary, reply_markup=reply_markup)
+    await update.message.reply_text("📋 Данные вашего инцидента:\n\n" + summary, reply_markup=reply_markup)
     
 async def request_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -496,23 +539,23 @@ async def request_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
 async def confirm_send(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Sends the incident data to the backend.
+    Sends the incident data to the backend from inline keyboard button.
     """
     query = update.callback_query
     await query.answer()
 
     # Проверяем, заполнены ли все поля
-    if not incident_data["title"] or not incident_data["description"] or not incident_data.get("files"):
-        await query.edit_message_text("Ошибка: не все данные заполнены.")
+    if not incident_data["title"] or not incident_data["description"] or not incident_data.get("files") or not incident_data.get("address"):
+        await query.edit_message_text("⚠️ Не все данные заполнены. Пожалуйста, убедитесь, что вы указали название, описание, добавили файлы и местоположение.")
         return
 
-    await query.edit_message_text("Отправляем данные...")
+    await query.edit_message_text("⏳ Отправляем данные...")
 
     # Логика отправки данных
     try:
         zip_buffer = await finalize_incident(incident_data)
         await send_incident_to_backend(zip_buffer, incident_data, update)
-        await query.edit_message_text("Инцидент успешно отправлен!")
+        await query.edit_message_text("✅ Инцидент успешно отправлен!")
         logger.info("Incident successfully sent to the backend.")
 
         # Очистка данных
@@ -527,9 +570,9 @@ async def confirm_send(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = generate_keyboard(minimal=True)
 
         # Отправляем новое сообщение с клавиатурой
-        await query.message.reply_text("Что вы хотите сделать дальше?", reply_markup=reply_markup)
+        await query.message.reply_text("🚀 Хотите сообщить о новом инциденте?", reply_markup=reply_markup)
 
     except Exception as e:
         logger.error(f"Error while sending data: {e}")
-        await query.edit_message_text("Ошибка при отправке данных.")
+        await query.edit_message_text("⚠️ Ошибка при отправке данных. Пожалуйста, попробуйте еще раз.")
 

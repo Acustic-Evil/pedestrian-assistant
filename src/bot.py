@@ -18,23 +18,39 @@ def main():
     # Создание приложения
     application = ApplicationBuilder().token(TOKEN).build()
 
+    # Обработчик для начала создания инцидента
     conversation_handler = ConversationHandler(
-        entry_points=[CommandHandler("start_incident", start_incident)],
+        entry_points=[
+            CommandHandler("start_incident", start_incident),
+            MessageHandler(filters.Regex(r"^🚀 Начать новый инцидент$"), start_incident)
+        ],
         states={
             TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_title)],
             DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_description)],
             SELECT_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_incident_type)],
         },
-        fallbacks=[CommandHandler("cancel", cancel)]
+        fallbacks=[
+            CommandHandler("cancel", cancel),
+            MessageHandler(filters.Regex(r"^❌ Отменить$"), cancel)
+        ]
     )
 
     application.add_handler(conversation_handler)
 
-    
+    # Основные команды
     application.add_handler(CommandHandler("start", start))
+    
+    # Обработчики для кнопок и команд
+    application.add_handler(MessageHandler(filters.Regex(r"^✅ Отправить инцидент$"), finish_incident))
     application.add_handler(CommandHandler("finish", finish_incident))
+    
+    application.add_handler(MessageHandler(filters.Regex(r"^❌ Отменить$"), cancel))
     application.add_handler(CommandHandler("cancel", cancel))
+    
+    application.add_handler(MessageHandler(filters.Regex(r"^✏️ Редактировать$"), edit_data_request))
     application.add_handler(CommandHandler("edit", edit_data_request))
+    
+    application.add_handler(MessageHandler(filters.Regex(r"^📁 Файлы$"), lambda update, context: show_files_callback(update, context)))
     
     application.add_handler(CallbackQueryHandler(edit_field, pattern="edit_.*"))
     application.add_handler(CallbackQueryHandler(show_files_callback, pattern="show_files"))
