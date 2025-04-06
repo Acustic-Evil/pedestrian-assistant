@@ -25,9 +25,21 @@ def main():
             MessageHandler(filters.Regex(r"^🚀 Начать новый инцидент$"), start_incident)
         ],
         states={
-            TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_title)],
-            DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_description)],
-            SELECT_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_incident_type)],
+            TITLE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(r"^❌ Отменить$"), set_title),
+                MessageHandler(filters.Regex(r"^❌ Отменить$"), cancel),
+                CommandHandler("cancel", cancel)
+            ],
+            DESCRIPTION: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(r"^❌ Отменить$"), set_description),
+                MessageHandler(filters.Regex(r"^❌ Отменить$"), cancel),
+                CommandHandler("cancel", cancel)
+            ],
+            SELECT_TYPE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(r"^❌ Отменить$"), set_incident_type),
+                MessageHandler(filters.Regex(r"^❌ Отменить$"), cancel),
+                CommandHandler("cancel", cancel)
+            ],
         },
         fallbacks=[
             CommandHandler("cancel", cancel),
